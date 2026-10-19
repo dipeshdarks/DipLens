@@ -1,8 +1,8 @@
-# RepoLens
+# Diplens
 
 [![GitHub](https://img.shields.io/badge/GitHub-dipeshdarks%2FDipAi-181717?logo=github&logoColor=white)](https://github.com/dipeshdarks/DipAi)
 
-Understand any GitHub repository at a glance. RepoLens turns public repository metadata into a readable, shareable analytics report: activity, releases, contributors, and explainable maintenance signals.
+Understand any GitHub repository at a glance. Diplens turns public repository metadata into a readable, shareable analytics report: activity, releases, contributors, and explainable maintenance signals.
 
 Built with Next.js App Router, React, TypeScript (strict), Tailwind CSS, Recharts, Lucide, and Zod. Data comes from the GitHub REST API, fetched and cached server-side.
 
@@ -14,13 +14,13 @@ Built with Next.js App Router, React, TypeScript (strict), Tailwind CSS, Rechart
 
 Search any public repository by `owner/repo` or a full GitHub URL.
 
-![RepoLens home page](public/images/home.png)
+![Diplens home page](public/images/home.png)
 
 ### Report
 
 A single shareable page: metrics, weekly commit activity, contributors, releases, languages, and explainable health signals.
 
-![RepoLens report page](public/images/report.png)
+![Diplens report page](public/images/report.png)
 
 ## Setup
 
@@ -65,7 +65,7 @@ npm run test:watch  # vitest watch mode
 - `types/report.ts` — stable normalized application types.
 - `app/repo/[owner]/[repo]/` — server component report route with loading skeletons, message-aware error boundary, and not-found state.
 
-Health indicators are RepoLens heuristics calculated from visible data — not an official GitHub health score. Missing values render as `—`, never as fake zeros.
+Health indicators are Diplens heuristics calculated from visible data — not an official GitHub health score. Missing values render as `—`, never as fake zeros.
 
 ## Deploy (Vercel)
 

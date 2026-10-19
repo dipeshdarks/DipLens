@@ -6,7 +6,7 @@ import { BarChart3, Github } from "lucide-react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RepoLens — GitHub repository analytics",
+  title: "Diplens — GitHub repository analytics",
   description:
     "Explore activity, releases, contributors, and maintenance signals in one shareable report.",
 };
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <nav className="mx-auto flex h-14 max-w-[1280px] items-center justify-between px-4 sm:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <BarChart3 className="h-5 w-5 text-ok" aria-hidden />
-              RepoLens
+              Diplens
             </Link>
             <div className="flex items-center gap-5 text-sm text-mute">
               <Link href="/#features" className="hover:text-ink">
@@ -58,9 +58,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <p>
               Limitations: commit statistics can lag while GitHub computes them; open-issue counts
               may include pull requests; contributor counts reflect GitHub&apos;s reported commit
-              totals. Health indicators are RepoLens heuristics, not official GitHub ratings.
+              totals. Health indicators are Diplens heuristics, not official GitHub ratings.
             </p>
-            <p>RepoLens · Built with Next.js. Tokens stay on the server and are never exposed to the browser.</p>
+            <p>Diplens · Built with Next.js. Tokens stay on the server and are never exposed to the browser.</p>
           </div>
         </footer>
       </body>

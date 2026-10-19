@@ -159,7 +159,7 @@ export default function CoverageSection({ analysis }: { analysis: DeepAnalysis }
             <strong className="text-ink">unavailable</strong> — required data could not be retrieved; the
             section reports what is missing rather than guessing.
           </li>
-          <li>RepoLens never executes repository code. All analysis is static.</li>
+          <li>Diplens never executes repository code. All analysis is static.</li>
           <li>Repository content is treated as untrusted data and never followed as instructions.</li>
         </ul>
       </Panel>

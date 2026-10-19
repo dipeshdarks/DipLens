@@ -86,7 +86,7 @@ export type DependencySet = {
 export type DependencyReport = {
   sets: DependencySet[];
   notes: string[];
-  /** RepoLens does not run vulnerability scans; no advisory source is queried. */
+  /** Diplens does not run vulnerability scans; no advisory source is queried. */
   vulnerabilityScanPerformed: boolean;
   outdatedPackagesChecked: boolean;
 };

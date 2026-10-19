@@ -239,7 +239,7 @@ export function buildDependencyReport(
   }
 
   notes.push(
-    "Vulnerability scanning is not performed: RepoLens queries no advisory database here. Package age alone never implies a vulnerability.",
+    "Vulnerability scanning is not performed: Diplens queries no advisory database here. Package age alone never implies a vulnerability.",
   );
   notes.push("Outdated-package detection is skipped because no registry version comparison is performed.");
 

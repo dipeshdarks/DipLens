@@ -11,7 +11,7 @@ export default function TestsCiSection({ analysis }: { analysis: DeepAnalysis })
     <div className="space-y-4">
       <div className="rounded-md border border-info/30 bg-info/5 px-4 py-3 text-sm text-mute">
         <FlaskConical className="mb-1 h-4 w-4 text-info" aria-hidden />
-        RepoLens performs <span className="text-ink">static inspection only</span>. No repository code is
+        Diplens performs <span className="text-ink">static inspection only</span>. No repository code is
         executed here, so this report never claims that tests pass, that coverage was measured, or that a
         build succeeded — only what files and configuration were observed.
       </div>

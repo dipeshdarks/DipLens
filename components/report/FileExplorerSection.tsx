@@ -75,7 +75,7 @@ export default function FileExplorerSection({
     <div className="space-y-4">
       <Panel
         title="File explorer"
-        subtitle="Browse the paths discovered during analysis. Files are fetched on demand through RepoLens — the browser never talks to GitHub directly."
+        subtitle="Browse the paths discovered during analysis. Files are fetched on demand through Diplens — the browser never talks to GitHub directly."
       >
         <label className="mb-3 flex items-center gap-2 rounded-md border border-line bg-elev px-3 py-2">
           <Search className="h-4 w-4 shrink-0 text-mute" aria-hidden />

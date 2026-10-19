@@ -11,7 +11,7 @@ const features = [
 
 const steps = [
   "Paste owner/repo or a GitHub URL.",
-  "RepoLens fetches public data on the server.",
+  "Diplens fetches public data on the server.",
   "Copy the report link and share it.",
 ];
 

@@ -100,7 +100,7 @@ export default function OverviewSection({
             ))}
           </ul>
           <p className="mt-4 text-xs text-mute">
-            Indicators are RepoLens heuristics from the data shown in this report — not official GitHub ratings.
+            Indicators are Diplens heuristics from the data shown in this report — not official GitHub ratings.
           </p>
         </Panel>
       ) : (

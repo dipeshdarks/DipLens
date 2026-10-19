@@ -1,4 +1,4 @@
-/* Core types for the RepoLens deep forensic engine.
+/* Core types for the Diplens deep forensic engine.
  *
  * Everything here is produced from static analysis of retrieved source at one
  * pinned commit SHA. Nothing is fabricated: unresolved work is represented as

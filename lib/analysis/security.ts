@@ -216,7 +216,7 @@ export function buildSecurityReport(input: {
 
   const notes: string[] = [
     "Secret detection is heuristic and limited to files retrieved within the analysis budget; absence of findings is not a clean bill of health.",
-    "Repository content is treated as untrusted data and is never executed by RepoLens.",
+    "Repository content is treated as untrusted data and is never executed by Diplens.",
   ];
   if (!workflowSnapshots.length) {
     notes.push("No CI workflow files were retrieved, so workflow permissions were not audited.");

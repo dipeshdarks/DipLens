@@ -99,7 +99,7 @@ export function buildTestsCiReport(input: {
   const workflowsWithTests = workflows.filter((w) => w.testSteps.length > 0);
 
   const notes: string[] = [
-    "RepoLens performs static inspection only: no repository code is executed, so no test run, coverage measurement, or build verification occurs here.",
+    "Diplens performs static inspection only: no repository code is executed, so no test run, coverage measurement, or build verification occurs here.",
     "Test files detected ≠ tests passed. Execution status is not claimed.",
   ];
   if (workflowApiNames && !workflowSnapshots.length) {
@@ -141,7 +141,7 @@ export function buildTestsCiReport(input: {
         category: "testing",
         severity: "info",
         title: `CI test steps configured in ${workflowsWithTests.length} workflow(s)`,
-        summary: `Retrieved workflows contain ${workflowsWithTests.reduce((a, w) => a + w.testSteps.length, 0)} test-related run step(s). Whether they pass is not verified by RepoLens.`,
+        summary: `Retrieved workflows contain ${workflowsWithTests.reduce((a, w) => a + w.testSteps.length, 0)} test-related run step(s). Whether they pass is not verified by Diplens.`,
         evidence: workflowsWithTests.slice(0, 3).map((w) => ({
           path: w.path,
           excerpt: w.testSteps[0],

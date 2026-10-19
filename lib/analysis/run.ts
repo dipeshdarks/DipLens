@@ -516,7 +516,7 @@ export function buildIndicators(input: IndicatorInput): DeepIndicator[] {
       ? {
           name: "Testing & CI evidence",
           status: "good",
-          detail: `${tests.testFileCount} test file(s) and CI test steps detected. Pass/fail status is not verified — RepoLens does not execute code.`,
+          detail: `${tests.testFileCount} test file(s) and CI test steps detected. Pass/fail status is not verified — Diplens does not execute code.`,
           basis: "tree + workflow files",
         }
       : hasTests
