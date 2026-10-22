@@ -1,0 +1,226 @@
+{
+  "schema": "dipai-evalreport",
+  "schema_version": 1,
+  "protocol": "dipai-eval/v1",
+  "run": {
+    "id": "de3db54718774aa9a9943fba03837ec8",
+    "created_at": "2026-10-22T18:05:37Z",
+    "argv": [
+      "python",
+      "-m",
+      "dipai.evaluate",
+      "--checkpoint",
+      "ckpts",
+      "--data-dir",
+      "data",
+      "--output",
+      "report.json",
+      "--device",
+      "cpu",
+      "--mode",
+      "full",
+      "--batch-size",
+      "4",
+      "--generate",
+      "--prompt-text",
+      "Once upon a time",
+      "--max-new-tokens",
+      "8",
+      "--warmup-iterations",
+      "1",
+      "--timed-iterations",
+      "3"
+    ],
+    "status": "completed"
+  },
+  "environment": {
+    "cuda_available": true,
+    "cuda_version": "12.6",
+    "device_name": "NVIDIA GeForce RTX 2050",
+    "vram_total_gb": 4.0,
+    "vram_free_gb": 3.22,
+    "compute_capability": "8.6",
+    "ram_total_gb": 5.86,
+    "ram_available_gb": 0.74,
+    "cpu_count": 8,
+    "platform": "Windows 10 (AMD64)",
+    "python_version": "3.10.1",
+    "torch_version": "2.14.1+cu126",
+    "bitsandbytes_available": null,
+    "bitsandbytes_version": null,
+    "warnings": [
+      "Available system RAM (0.74 GB) is low. Close other applications before training. The data loader uses num_workers=0 and streaming to minimize footprint.",
+      "Total system RAM is 5.9 GB (below the 8 GB design target). Keep batch_size small and avoid loading large datasets into memory."
+    ],
+    "python": "3.10.1",
+    "torch": "2.14.1+cu126",
+    "sentencepiece": "0.2.2",
+    "device_resolved": "cpu",
+    "dtype_resolved": "float32",
+    "compile_enabled": false,
+    "cudnn_benchmark": false
+  },
+  "checkpoint": {
+    "file": "ckpt_00000001.pt",
+    "path_display": "ckpt_00000001.pt",
+    "sha256": "9c901868386ab23a368232729f73b3dd7556ba71e757133ec610ac6679981279",
+    "bytes": 77178414,
+    "step": 1,
+    "saved_at": "2026-10-22T18:05:33Z",
+    "num_params": 19290624,
+    "format_version": 1,
+    "model_config": {
+      "vocab_size": 544,
+      "block_size": 256,
+      "n_layer": 6,
+      "n_head": 8,
+      "n_embd": 512,
+      "dropout": 0.1,
+      "bias": false,
+      "tie_weights": true
+    }
+  },
+  "tokenizer": {
+    "path": "tokenizer.model",
+    "sha256": "ee88414ead63bc7f79d9aeb9dbfa0561e1a74bf41a8413eb0fb786c3930fa2d1",
+    "vocab_size": 544,
+    "source": "checkpoint-dir",
+    "meta": {
+      "vocab_size": 544,
+      "special_ids": {
+        "pad": 0,
+        "unk": 1,
+        "bos": 2,
+        "eos": 3
+      },
+      "block_size": 256
+    }
+  },
+  "dataset": {
+    "data_dir": "data",
+    "val_file": "val.bin",
+    "sha256": "a89460e34df7c5a95b4409d318adde312c015fb99716e48d007d95aacd651b0a",
+    "tokens": 8192,
+    "blocks": 32,
+    "block_size": 256,
+    "split": "val",
+    "stats_sha256": "297f7bc3a7cb735cfe3a245e12f8ff987625e64dbcf79753b597b514b3f0eb7a",
+    "stats": {
+      "schema_version": 2,
+      "files": [
+        "fixture-corpus.jsonl"
+      ],
+      "records_read": 500,
+      "records_empty_dropped": 0,
+      "records_duplicate_dropped": 0,
+      "records_too_long_dropped": 0,
+      "records_kept": 500,
+      "records_invalid_json": 0,
+      "records_missing_field": 0,
+      "chars_total": 0,
+      "train_records": 0,
+      "val_records": 500,
+      "train_tokens": 0,
+      "val_tokens": 8192,
+      "train_blocks": 0,
+      "val_blocks": 32,
+      "block_size": 256,
+      "vocab_size": 544,
+      "dedup_mode": "exact",
+      "seed": 1337,
+      "val_fraction": 0.1,
+      "source_weights": [],
+      "limits": {},
+      "truncated_by": ""
+    }
+  },
+  "settings": {
+    "mode": "full",
+    "eval_iters": null,
+    "seed": null,
+    "batch_size": 4,
+    "max_sequences": null,
+    "generation": {
+      "prompt_set_sha256": null,
+      "prompt_preview": "Once upon a time",
+      "prompt_count": 1,
+      "max_new_tokens": 8,
+      "temperature": 0.0,
+      "top_k": 0,
+      "top_p": 1.0,
+      "repetition_penalty": 1.0,
+      "warmup_iterations": 1,
+      "timed_iterations": 3,
+      "eos_id": 3
+    }
+  },
+  "metrics": {
+    "kind": "validation",
+    "load_seconds": 0.6317493999995349,
+    "validation": {
+      "val_loss": 6.40106482366665,
+      "perplexity": 602.4862380340327,
+      "token_count": 8191,
+      "sequence_count": 32,
+      "block_size": 256,
+      "mode": "full",
+      "aggregation": "token_weighted_mean_ce"
+    },
+    "generation": {
+      "batch_size": 1,
+      "gpu_sync": false,
+      "warmup_iterations": 1,
+      "timed_iterations": 3,
+      "iterations": [
+        {
+          "index": 0,
+          "prompt_tokens": 7,
+          "generated_tokens": 8,
+          "ttft_ms": 16.24420000007376,
+          "total_ms": 114.44290000144974,
+          "tokens_per_second": 69.90385598319037,
+          "decode_tokens_per_second": 81.46747360085115,
+          "early_stop": false
+        },
+        {
+          "index": 1,
+          "prompt_tokens": 7,
+          "generated_tokens": 8,
+          "ttft_ms": 17.679600001429208,
+          "total_ms": 122.48960000215448,
+          "tokens_per_second": 65.31166727509346,
+          "decode_tokens_per_second": 76.32859459922375,
+          "early_stop": false
+        },
+        {
+          "index": 2,
+          "prompt_tokens": 7,
+          "generated_tokens": 8,
+          "ttft_ms": 14.67659999980242,
+          "total_ms": 118.72930000026827,
+          "tokens_per_second": 67.38016647939409,
+          "decode_tokens_per_second": 76.88411737479358,
+          "early_stop": false
+        }
+      ],
+      "summary": {
+        "timed_iterations": 3,
+        "median_ttft_ms": 16.24420000007376,
+        "p95_ttft_ms": 17.679600001429208,
+        "median_total_ms": 118.72930000026827,
+        "p95_total_ms": 122.48960000215448,
+        "median_tokens_per_second": 67.38016647939409
+      }
+    }
+  },
+  "reproducible": true,
+  "reproducible_reasons": [],
+  "warnings": [
+    {
+      "code": "cpu_only_run",
+      "message": "evaluation ran on CPU; numbers are valid but conditions differ from GPU runs",
+      "detail": null
+    }
+  ],
+  "errors": []
+}

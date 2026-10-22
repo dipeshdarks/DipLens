@@ -1,0 +1,689 @@
+{
+  "schema": "dipai-archmeta",
+  "schema_version": 1,
+  "generated_at": "2026-10-22T16:54:04Z",
+  "generator": {
+    "dipai_git": {
+      "head": "9d4de6b3ba9b00e9dcb26f267068b71874da4524",
+      "origin_main": "9d4de6b3ba9b00e9dcb26f267068b71874da4524",
+      "dirty": "dirty"
+    },
+    "anchors_verified": true
+  },
+  "source": {
+    "kind": "config",
+    "path_display": "configs/scratch.yaml",
+    "sha256": "dc97a0ea9bb800b9f523d96bfd5b09d5ffbe92fca5172c5d03310f36a6ea95ac"
+  },
+  "model": {
+    "class": "DipaiGPT",
+    "model_config": {
+      "vocab_size": 4104,
+      "block_size": 256,
+      "n_layer": 6,
+      "n_head": 8,
+      "n_embd": 512,
+      "dropout": 0.1,
+      "bias": false,
+      "tie_weights": true
+    },
+    "head_dim": 64,
+    "positional_encoding": "learned_absolute",
+    "normalization": "pre_layernorm",
+    "activation": "gelu",
+    "attention": "sdpa_causal_fused_qkv",
+    "max_context": 256,
+    "vocab_source": "model_config"
+  },
+  "params": {
+    "total": 21113344,
+    "nonembed": 19012096,
+    "trainable": 21113344,
+    "frozen": 0,
+    "components": [
+      {
+        "id": "token_embedding",
+        "label": "Token embedding (tok_emb)",
+        "count": 2101248,
+        "pct": 9.9522
+      },
+      {
+        "id": "position_embedding",
+        "label": "Position embedding (pos_emb)",
+        "count": 131072,
+        "pct": 0.6208
+      },
+      {
+        "id": "transformer_blocks",
+        "label": "Transformer blocks (blocks × n_layer)",
+        "count": 18880512,
+        "pct": 89.4245
+      },
+      {
+        "id": "final_ln",
+        "label": "Final LayerNorm (ln_f)",
+        "count": 512,
+        "pct": 0.0024
+      },
+      {
+        "id": "lm_head_untied",
+        "label": "LM head (lm_head)",
+        "count": 0,
+        "pct": 0
+      }
+    ],
+    "tie_note": "lm_head.weight tied to tok_emb.weight (counted once)"
+  },
+  "shapes": {
+    "batch": 1,
+    "seq": 8,
+    "note": "observed on CPU in eval mode with zero token ids (T = min(8, block_size) = 8); no gradients, inputs are synthetic",
+    "nodes": {
+      "input": {
+        "output": [
+          1,
+          8
+        ]
+      },
+      "tok_emb": {
+        "input": [
+          1,
+          8
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {
+          "weight": [
+            4104,
+            512
+          ]
+        }
+      },
+      "pos_emb": {
+        "input": [
+          8
+        ],
+        "output": [
+          8,
+          512
+        ],
+        "params": {
+          "weight": [
+            256,
+            512
+          ]
+        }
+      },
+      "dropout": {
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {}
+      },
+      "block_ln1": {
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {
+          "weight": [
+            512
+          ]
+        }
+      },
+      "attention": {
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {
+          "qkv.weight": [
+            1536,
+            512
+          ],
+          "proj.weight": [
+            512,
+            512
+          ]
+        }
+      },
+      "block_ln2": {
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {
+          "weight": [
+            512
+          ]
+        }
+      },
+      "mlp": {
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {
+          "fc.weight": [
+            2048,
+            512
+          ],
+          "proj.weight": [
+            512,
+            2048
+          ]
+        }
+      },
+      "blocks": {
+        "note": "observed on blocks[0]; all n_layer blocks share these shapes",
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {
+          "ln1.weight": [
+            512
+          ],
+          "attn.qkv.weight": [
+            1536,
+            512
+          ],
+          "attn.proj.weight": [
+            512,
+            512
+          ],
+          "ln2.weight": [
+            512
+          ],
+          "mlp.fc.weight": [
+            2048,
+            512
+          ],
+          "mlp.proj.weight": [
+            512,
+            2048
+          ]
+        }
+      },
+      "ln_f": {
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          512
+        ],
+        "params": {
+          "weight": [
+            512
+          ]
+        }
+      },
+      "lm_head": {
+        "input": [
+          1,
+          8,
+          512
+        ],
+        "output": [
+          1,
+          8,
+          4104
+        ],
+        "params": {
+          "weight": [
+            4104,
+            512
+          ]
+        }
+      },
+      "logits": {
+        "output": [
+          1,
+          8,
+          4104
+        ]
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "tokenizer",
+      "kind": "io",
+      "label": "Tokenizer",
+      "purpose": "SentencePiece BPE encodes raw text to token ids and back. Fixed special ids: pad=0, unk=1, bos=2, eos=3.",
+      "params": null,
+      "config": {
+        "specials": {
+          "pad": 0,
+          "unk": 1,
+          "bos": 2,
+          "eos": 3
+        }
+      },
+      "source": {
+        "file": "dipai/tokenizer.py",
+        "symbol": "class DipaiTokenizer",
+        "lines": [
+          42,
+          262
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/tokenizer.py#L42-262",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "input",
+      "kind": "io",
+      "label": "Token ids",
+      "purpose": "Input tensor of shape (B, T) with int64 indices into the embedding table.",
+      "params": null,
+      "config": {
+        "dtype": "int64",
+        "layout": "(batch, sequence)"
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "def forward",
+        "lines": [
+          176,
+          211
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L176-211",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "tok_emb",
+      "kind": "embedding",
+      "label": "Token embedding",
+      "purpose": "nn.Embedding(vocab_size, n_embd): one learned vector per vocabulary token.",
+      "params": 2101248,
+      "config": {
+        "vocab_size": 4104,
+        "n_embd": 512
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class DipaiGPT",
+        "lines": [
+          128,
+          128
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L128-128",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "pos_emb",
+      "kind": "embedding",
+      "label": "Position embedding",
+      "purpose": "nn.Embedding(block_size, n_embd): learned absolute positions, added elementwise to the token embeddings.",
+      "params": 131072,
+      "config": {
+        "block_size": 256,
+        "n_embd": 512
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class DipaiGPT",
+        "lines": [
+          129,
+          129
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L129-129",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "dropout",
+      "kind": "op",
+      "label": "Embedding dropout",
+      "purpose": "Dropout applied to the summed embeddings during training; identity at eval.",
+      "params": 0,
+      "config": {
+        "p": 0.1
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class DipaiGPT",
+        "lines": [
+          130,
+          130
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L130-130",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "blocks",
+      "kind": "block",
+      "label": "Transformer blocks ×6",
+      "purpose": "Pre-LayerNorm residual blocks stacked n_layer times: x = x + attn(ln1(x)); x = x + mlp(ln2(x)).",
+      "params": 18880512,
+      "config": {
+        "n_layer": 6,
+        "n_head": 8,
+        "n_embd": 512,
+        "block_size": 256,
+        "bias": false,
+        "dropout": 0.1
+      },
+      "children": [
+        "block_ln1",
+        "attention",
+        "block_ln2",
+        "mlp"
+      ],
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class Block",
+        "lines": [
+          100,
+          113
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L100-113",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "block_ln1",
+      "kind": "norm",
+      "label": "Block LayerNorm (pre-attention)",
+      "purpose": "nn.LayerNorm feeding the attention sub-layer (pre-norm placement).",
+      "params": 512,
+      "count_scope": "per_block",
+      "parent": "blocks",
+      "config": {
+        "eps": 0.00001,
+        "bias": false,
+        "dim": 512
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class Block",
+        "lines": [
+          105,
+          105
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L105-105",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "attention",
+      "kind": "attention",
+      "label": "Causal self-attention",
+      "purpose": "Fused QKV projection, multi-head reshape, scaled_dot_product_attention with is_causal=True over the context window, then output projection.",
+      "params": 1048576,
+      "count_scope": "per_block",
+      "parent": "blocks",
+      "config": {
+        "n_head": 8,
+        "head_dim": 64,
+        "bias": false,
+        "dropout": 0.1,
+        "is_causal": true,
+        "fused_qkv": true,
+        "implementation": "torch.nn.functional.scaled_dot_product_attention"
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class CausalSelfAttention",
+        "lines": [
+          38,
+          80
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L38-80",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "block_ln2",
+      "kind": "norm",
+      "label": "Block LayerNorm (pre-MLP)",
+      "purpose": "nn.LayerNorm feeding the MLP sub-layer (pre-norm placement).",
+      "params": 512,
+      "count_scope": "per_block",
+      "parent": "blocks",
+      "config": {
+        "eps": 0.00001,
+        "bias": false,
+        "dim": 512
+      },
+      "config_note": null,
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class Block",
+        "lines": [
+          107,
+          107
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L107-107",
+        "verified": true,
+        "note": null
+      }
+    },
+    {
+      "id": "mlp",
+      "kind": "mlp",
+      "label": "MLP (feed-forward)",
+      "purpose": "Position-wise feed-forward: Linear(512 → 2048), GELU, Linear(2048 → 512).",
+      "params": 2097152,
+      "count_scope": "per_block",
+      "parent": "blocks",
+      "config": {
+        "expansion": 4,
+        "activation": "gelu",
+        "hidden": 2048,
+        "bias": false
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class MLP",
+        "lines": [
+          87,
+          97
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L87-97",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "ln_f",
+      "kind": "norm",
+      "label": "Final LayerNorm",
+      "purpose": "Final LayerNorm applied after the last block, before the LM head.",
+      "params": 512,
+      "config": {
+        "eps": 0.00001,
+        "bias": false,
+        "dim": 512
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class DipaiGPT",
+        "lines": [
+          132,
+          132
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L132-132",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "lm_head",
+      "kind": "head",
+      "label": "LM head",
+      "purpose": "Linear(n_embd → vocab_size, bias=False) producing next-token logits. Weight tied to tok_emb — no additional parameters.",
+      "params": 0,
+      "config": {
+        "vocab_size": 4104,
+        "bias": false,
+        "tie_weights": true
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "class DipaiGPT",
+        "lines": [
+          133,
+          136
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L133-136",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    },
+    {
+      "id": "logits",
+      "kind": "io",
+      "label": "Logits",
+      "purpose": "Scores of shape (B, T, 4104). Training objective: cross-entropy against shifted next-token ids (ignore_index=-100).",
+      "params": null,
+      "config": {
+        "objective": "next_token_cross_entropy"
+      },
+      "source": {
+        "file": "dipai/model.py",
+        "symbol": "def forward",
+        "lines": [
+          199,
+          206
+        ],
+        "url": "https://github.com/dipeshdarks/DipAi/blob/main/dipai/model.py#L199-206",
+        "verified": true,
+        "note": null
+      },
+      "config_note": null
+    }
+  ],
+  "flow": [
+    {
+      "from": "tokenizer",
+      "to": "input",
+      "label": "text → ids"
+    },
+    {
+      "from": "input",
+      "to": "tok_emb",
+      "label": "ids (B, T) int64"
+    },
+    {
+      "from": "tok_emb",
+      "to": "dropout",
+      "label": "token vectors"
+    },
+    {
+      "from": "pos_emb",
+      "to": "dropout",
+      "label": "absolute positions added"
+    },
+    {
+      "from": "dropout",
+      "to": "blocks",
+      "label": "x: (B, T, 512)"
+    },
+    {
+      "from": "blocks",
+      "to": "ln_f",
+      "label": "after 6 pre-LN blocks"
+    },
+    {
+      "from": "ln_f",
+      "to": "lm_head",
+      "label": "normalized hidden state"
+    },
+    {
+      "from": "lm_head",
+      "to": "logits",
+      "label": "logits: (B, T, 4104)"
+    }
+  ],
+  "block_flow": [
+    {
+      "from": "block_ln1",
+      "to": "attention",
+      "label": "LayerNorm → attention"
+    },
+    {
+      "from": "attention",
+      "to": "block_ln2",
+      "label": "residual add → LayerNorm"
+    },
+    {
+      "from": "block_ln2",
+      "to": "mlp",
+      "label": "LayerNorm → MLP"
+    },
+    {
+      "from": "mlp",
+      "to": "blocks",
+      "label": "residual add → block output"
+    }
+  ],
+  "warnings": []
+}
