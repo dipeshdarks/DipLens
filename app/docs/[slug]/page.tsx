@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Github } from "lucide-react";
+import { Github, Pencil } from "lucide-react";
 import { DOC_PAGES, GITHUB, docPage, prevNext } from "@/lib/docs/registry";
 import { loadSections } from "@/lib/docs/search";
 import { MDX_PAGES } from "@/lib/docs/mdx";
@@ -64,6 +64,15 @@ export default function DocPage({ params }: { params: { slug: string } }) {
                 View source
               </a>
             )}
+            <a
+              href={GITHUB.blob(`content/docs/${page.slug}.mdx`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 text-mute transition-colors duration-150 hover:border-info/40 hover:text-ink"
+            >
+              <Pencil className="h-4 w-4" aria-hidden />
+              Edit this page
+            </a>
             <Link
               href="/docs"
               className="inline-flex items-center rounded-md border border-line px-3 py-1.5 text-mute transition-colors duration-150 hover:border-info/40 hover:text-ink"
