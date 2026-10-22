@@ -67,6 +67,19 @@ npm run test:watch  # vitest watch mode
 
 Health indicators are Diplens heuristics calculated from visible data — not an official GitHub health score. Missing values render as `—`, never as fake zeros.
 
+## Documentation website
+
+In-app developer docs live at [`/docs`](https://diplensrepo.vercel.app/docs) in the same Next.js app.
+
+- **Content:** MDX pages under `content/docs/` (11 pages: getting started, installation, quick start, core concepts, features, architecture, API reference, configuration, examples, troubleshooting, contributing).
+- **Nav & metadata:** `lib/docs/registry.ts` + `lib/docs/pages.json`; previous/next and the sidebar are generated from one registry.
+- **Search:** full-text, client-side (<kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd>). The index is generated at `predev`/`prebuild` by `scripts/build-docs-index.mjs` into `lib/docs/search-index.json` — there is no runtime fs or search API, so it works on Vercel.
+- **Components:** `components/docs/` (sidebar, TOC, search dialog, code blocks with copy, callouts, Mermaid diagrams, theme toggle).
+- **Theme:** dark-first with a persisted light theme (`diplens-theme` in localStorage; no-flash inline script in `app/layout.tsx`).
+- **SEO:** per-page canonical metadata, `app/sitemap.ts`, `app/robots.ts` (canonical base `https://diplensrepo.vercel.app`).
+
+Regenerate the search index manually with `node scripts/build-docs-index.mjs` (also runs automatically before dev/build). Docs accuracy is treated as a bug — open an issue if a page disagrees with the code.
+
 ## Deploy (Vercel)
 
 1. Push the project to GitHub.

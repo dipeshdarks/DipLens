@@ -1,8 +1,82 @@
 @tailwind base; @tailwind components; @tailwind utilities;
+
+:root {
+  --c-base: 11 13 16;
+  --c-card: 18 22 28;
+  --c-elev: 25 31 39;
+  --c-line: 41 49 59;
+  --c-ink: 244 247 250;
+  --c-mute: 154 166 178;
+  --c-ok: 103 232 165;
+  --c-info: 124 183 255;
+  --c-warn: 245 197 106;
+  --c-bad: 255 125 133;
+}
+
+html.light {
+  --c-base: 247 248 250;
+  --c-card: 255 255 255;
+  --c-elev: 238 242 246;
+  --c-line: 216 224 234;
+  --c-ink: 16 20 24;
+  --c-mute: 86 101 117;
+  --c-ok: 14 122 85;
+  --c-info: 29 95 208;
+  --c-warn: 138 90 0;
+  --c-bad: 200 30 58;
+}
+
 body { @apply bg-base text-ink antialiased; font-variant-numeric: tabular-nums; }
-:focus-visible { outline: 2px solid #7CB7FF; outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: 2px solid rgb(var(--c-info)); outline-offset: 2px; border-radius: 6px; }
+
 @layer components {
   .panel { @apply rounded-lg border border-line bg-card p-5 transition-colors duration-150 hover:border-[#3a4552]; }
+  html.light .panel { @apply hover:border-[#b9c5d4]; }
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-md bg-ok px-4 py-2.5 text-sm font-medium text-base transition duration-150 hover:brightness-110 active:scale-[.98]; }
+  .kbd { @apply inline-flex min-w-[1.4rem] items-center justify-center rounded border border-line bg-elev px-1.5 py-0.5 font-mono text-[11px] text-mute; }
 }
+
+/* ---------- documentation prose (MDX output) ---------- */
+
+.docs-prose { @apply pb-4 text-[15px] leading-7 text-mute; }
+.docs-prose > :first-child { @apply mt-0; }
+.docs-prose h1 { @apply mb-4 text-3xl font-semibold tracking-tight text-ink; }
+.docs-prose h2 { @apply mb-3 mt-10 scroll-mt-24 border-t border-line pt-8 text-xl font-semibold text-ink; }
+.docs-prose h3 { @apply mb-2 mt-8 scroll-mt-24 text-lg font-semibold text-ink; }
+.docs-prose h4 { @apply mb-2 mt-6 text-base font-semibold text-ink; }
+.docs-prose p { @apply my-4; }
+.docs-prose a { @apply text-info underline-offset-2 hover:underline; }
+.docs-prose strong { @apply font-semibold text-ink; }
+.docs-prose em { @apply italic; }
+.docs-prose ul { @apply my-4 list-disc space-y-1.5 pl-6; }
+.docs-prose ol { @apply my-4 list-decimal space-y-1.5 pl-6; }
+.docs-prose ul ul { @apply my-1 list-disc; }
+.docs-prose ol ol { @apply my-1 list-decimal; }
+.docs-prose li { @apply pl-1; }
+.docs-prose blockquote { @apply my-5 border-l-2 border-line py-1 pl-4 text-mute; }
+.docs-prose blockquote p { @apply my-2; }
+.docs-prose hr { @apply my-8 border-line; }
+.docs-prose table { @apply my-6 w-full border-collapse text-left text-sm; }
+.docs-prose thead { @apply bg-elev; }
+.docs-prose th { @apply border border-line px-3 py-2 font-medium text-ink; }
+.docs-prose td { @apply border border-line px-3 py-2 align-top; }
+.docs-prose code:not(pre code) { @apply rounded bg-elev px-1.5 py-0.5 font-mono text-[0.85em] text-ink; }
+.docs-prose pre { @apply my-5 overflow-x-auto rounded-lg border border-line bg-card p-4 font-mono text-[13px] leading-6; }
+
+/* ---------- highlight.js token theme (both modes) ---------- */
+
+.hljs { color: rgb(var(--c-ink)); background: transparent; }
+.hljs-comment, .hljs-quote { color: rgb(var(--c-mute)); font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-doctag { color: rgb(var(--c-info)); }
+.hljs-string, .hljs-regexp, .hljs-attr, .hljs-selector-attr, .hljs-selector-pseudo { color: rgb(var(--c-ok)); }
+.hljs-number, .hljs-symbol, .hljs-bullet { color: rgb(var(--c-warn)); }
+.hljs-title, .hljs-name, .hljs-title.function_, .hljs-title.class_ { color: rgb(var(--c-ink)); font-weight: 600; }
+.hljs-type, .hljs-class .hljs-title, .hljs-title.class_.inherited__ { color: rgb(var(--c-info)); }
+.hljs-built_in, .hljs-meta .hljs-keyword { color: rgb(var(--c-ok)); }
+.hljs-variable, .hljs-template-variable, .hljs-params { color: rgb(var(--c-ink)); }
+.hljs-meta { color: rgb(var(--c-mute)); }
+.hljs-attribute { color: rgb(var(--c-info)); }
+.hljs-addition { color: rgb(var(--c-ok)); background: rgb(var(--c-ok) / 0.12); }
+.hljs-deletion { color: rgb(var(--c-bad)); background: rgb(var(--c-bad) / 0.12); }
+
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; } }

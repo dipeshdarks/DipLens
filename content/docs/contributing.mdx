@@ -1,0 +1,99 @@
+Diplens (repository [dipeshdarks/DipAi](https://github.com/dipeshdarks/DipAi)) is open source. Contributions of code, tests, and documentation are welcome.
+
+<Callout type="info" title="No separate CONTRIBUTING.md (yet)">
+  This page is the contributing guide. There is no dedicated `CONTRIBUTING.md` file or `LICENSE`
+  file in the repository today — if you add one via a pull request, please update this page to
+  match.
+</Callout>
+
+## 1. Fork and clone
+
+1. Open [github.com/dipeshdarks/DipAi](https://github.com/dipeshdarks/DipAi) and click **Fork**.
+2. Clone **your** fork:
+
+```bash
+git clone https://github.com/<your-username>/DipAi.git
+cd DipAi
+git remote add upstream https://github.com/dipeshdarks/DipAi.git
+```
+
+## 2. Create a branch
+
+```bash
+git checkout -b fix/short-description
+```
+
+Use a focused branch per change (`fix/…`, `feat/…`, `docs/…`, `test/…`).
+
+## 3. Install and verify the baseline
+
+```bash
+npm install
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+All four must pass **before** you start changing code, so you can attribute any failure to your change.
+
+## 4. Make your change
+
+Guidelines that match the existing codebase:
+
+- **TypeScript strict** — no `any` unless truly unavoidable; prefer precise types in `types/*.ts`.
+- **Tests** — new behaviour needs tests. Vitest + Testing Library; colocate as `*.test.ts(x)` beside the source.
+- **Server/client boundary** — GitHub tokens and fetches stay in server code; client components receive plain props.
+- **Never fabricate data** — missing values stay `null` and render as `—`; heuristics must state their rules.
+- **Static-only analysis** — the engine must never execute analysed repository code.
+- **Docs** — if you change user-facing behaviour, update the matching page under `content/docs/`.
+
+## 5. Run the checks again
+
+```bash
+npm run lint && npm run typecheck && npm test && npm run build
+```
+
+Fix every failure you introduced. Do not weaken existing tests to make yours pass.
+
+## 6. Commit and push
+
+```bash
+git add -A
+git commit -m "fix: describe the change in one line"
+git push origin fix/short-description
+```
+
+Keep commits focused; split unrelated work into separate PRs.
+
+## 7. Open a pull request
+
+1. Open a PR against `dipeshdarks/DipAi` → `main`: [github.com/dipeshdarks/DipAi/compare](https://github.com/dipeshdarks/DipAi/compare).
+2. Use a clear title and describe **what** changed and **why**.
+3. Link related issues (`Fixes #123`).
+4. Include screenshots for UI changes (both dark and light themes if relevant).
+5. Note any docs updates you made (or deliberately skipped).
+
+## Reporting bugs & requesting features
+
+- **Bugs:** [github.com/dipeshdarks/DipAi/issues/new](https://github.com/dipeshdarks/DipAi/issues) — include reproduction steps, observed vs expected behaviour, and `node --version`.
+- **Features:** same tracker; open an issue first for large changes so the direction can be discussed before a PR.
+
+## Documentation contributions
+
+The docs site is part of this repository:
+
+| Path | Contents |
+|---|---|
+| `content/docs/*.mdx` | page content (markdown + MDX components) |
+| `lib/docs/pages.json` | slug / title / description registry |
+| `lib/docs/mdx.ts` | static import map for new pages |
+| `components/docs/` | sidebar, TOC, search, code blocks, theme |
+
+After editing content, run `node scripts/build-docs-index.mjs` (or just `npm run dev`, which does it for you) and verify search finds your new headings via <kbd class="kbd">⌘K</kbd>.
+
+Docs pull requests are held to the same accuracy standard as code: no invented commands, APIs, or file paths — link to real source files only.
+
+## Review expectations
+
+Maintainers review for correctness, test coverage, type safety, and honesty of the UX (no fabricated metrics, no silent failures). Small focused PRs merge fastest.

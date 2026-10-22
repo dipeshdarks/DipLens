@@ -1,0 +1,549 @@
+{
+  "version": 1,
+  "docs": [
+    {
+      "slug": "getting-started",
+      "title": "Getting Started",
+      "description": "What DipAi is, the problem it solves, and how its pieces fit together.",
+      "headings": [
+        {
+          "title": "What is Diplens?",
+          "id": "what-is-diplens"
+        },
+        {
+          "title": "The problem it solves",
+          "id": "the-problem-it-solves"
+        },
+        {
+          "title": "Main capabilities",
+          "id": "main-capabilities"
+        },
+        {
+          "title": "Who should use it",
+          "id": "who-should-use-it"
+        },
+        {
+          "title": "High-level architecture",
+          "id": "high-level-architecture"
+        },
+        {
+          "title": "Next steps",
+          "id": "next-steps"
+        },
+        {
+          "title": "Repository",
+          "id": "repository"
+        }
+      ],
+      "body": "What is Diplens? Diplens turns public GitHub repository metadata into a readable, shareable analytics report. Paste an owner/repo string or a full github.com URL and get one page with metrics, weekly commit activity, contributors, releases, languages, explainable health signals — plus a deep static analysis of the repository's source code. The product lives in the open-source repository dipeshdarks/DipAi (the app is named Diplens; the repository is DipAi). It is built with Next.js App Router, React, TypeScript (strict), Tailwind CSS, Recharts, Lucide, and Zod. GitHub data is fetched and cached server-side ; the browser never sees your token. The problem it solves GitHub already exposes stars, commits, releases, and contributors — but scattered across many pages and raw API payloads. Diplens compresses that into a single URL you can share with a teammate, a client, or a hiring manager, and adds analysis GitHub does not do for you: module graphs, call graphs, taint-path candidates, defect patterns, and coverage of tests and CI. Main capabilities Repository search — owner/repo or a full GitHub URL, Zod-validated before any network call. Shareable report — every report has a canonical URL at /repo/{owner}/{repo} ; no sign-in required. Activity & history — stars, forks, open issues, weekly commit volume for the past year, latest releases. Contributors & languages — top contributors with contribution counts, language breakdown by bytes. Health signals — four explainable heuristics (recent activity, release recency, community interest, maintenance), each stating the data behind the label. There is no hidden score. Deep static analysis — tree-sitter WASM parsing (TypeScript, Python, Go), symbol tables, call graphs, execution paths, taint-flow candidates, defect detectors, dependency manifests, architecture summary, secret-pattern scan, and tests/CI detection. File viewer — open individual source files through a size-capped, path-validated API route. <Callout type=\"info\" title=\"Public repositories only\" Diplens analyses public repositories. Private repositories, OAuth sign-in, and authenticated git operations are explicitly out of scope. </Callout Who should use it Maintainers who want a quick health and structure snapshot of a repo they did not write. Reviewers and auditors who need evidence-linked findings (every finding carries file/line evidence and a verification plan). Developers evaluating a dependency before adopting it. Anyone who wants a single shareable link that answers \"what is going on in this repository?\" High-level architecture Browser ──▶ Next.js routes (App Router, server components) │ ├── lib/validation.ts input parsing (Zod) ├── lib/github.ts typed GitHub REST client + normalizers ├── lib/health.ts explainable health signals ├── lib/analysis/ deep static analysis pipeline │ acquire → parse → symbols → callgraph → paths → taint/defects └── components/report/ report UI sections All GitHub access happens on the server. Raw API payloads are normalized into stable camelCase types in types/report.ts and types/analysis.ts before any UI component sees them. Next steps Installation — prerequisites, clone, install, first run. Quick Start — the shortest path from a clean checkout to a live report. Core Concepts — reports, heuristics, budgets, and the static-only policy. Features — every implemented feature in detail. Repository Repository: github.com/dipeshdarks/DipAi Issues: github.com/dipeshdarks/DipAi/issues Pull requests: github.com/dipeshdarks/DipAi/pulls Source tree: github.com/dipeshdarks/DipAi/tree/main"
+    },
+    {
+      "slug": "installation",
+      "title": "Installation",
+      "description": "Prerequisites, clone, install, environment setup, and first run.",
+      "headings": [
+        {
+          "title": "Prerequisites",
+          "id": "prerequisites"
+        },
+        {
+          "title": "Clone",
+          "id": "clone"
+        },
+        {
+          "title": "Install dependencies",
+          "id": "install-dependencies"
+        },
+        {
+          "title": "Environment setup (optional)",
+          "id": "environment-setup-optional"
+        },
+        {
+          "title": "Run the development server",
+          "id": "run-the-development-server"
+        },
+        {
+          "title": "Production build",
+          "id": "production-build"
+        },
+        {
+          "title": "Verify the install",
+          "id": "verify-the-install"
+        },
+        {
+          "title": "Common setup errors",
+          "id": "common-setup-errors"
+        },
+        {
+          "title": "Next step",
+          "id": "next-step"
+        }
+      ],
+      "body": "Prerequisites | Requirement | Notes | |---|---| | Node.js 20+ | Recommended. The project is typed against @types/node ^20; there is no engines field in package.json , so older Node versions are not hard-blocked but are untested. | | npm | The repo ships a package-lock.json ; npm is the verified package manager. | | Git | To clone the repository. | | (Optional) GitHub token | A free personal access token with public read-only scope raises the GitHub API rate limit from 60/h to 5,000/h. See Configuration. | No database, no Docker, and no other services are required. Clone git clone https://github.com/dipeshdarks/DipAi.git cd DipAi PowerShell: git clone https://github.com/dipeshdarks/DipAi.git Set-Location DipAi Install dependencies npm install This installs Next.js 14, React 18, TypeScript, Tailwind CSS, Recharts, Zod, tree-sitter WASM packages, MDX, and the test toolchain (Vitest + Testing Library). Environment setup (optional) The app runs with no configuration at all for light usage. To raise the GitHub rate limit, create a local env file and set a server-side token: cp .env.example .env.local PowerShell: Copy-Item .env.example .env.local Then edit .env.local : GITHUB TOKEN=ghp your token here <Callout type=\"warning\" title=\"Never prefix the token with NEXT PUBLIC \" GITHUB TOKEN is read only on the server ( lib/github.ts ). Exposing it to the browser would leak it. Do not commit .env.local — it is gitignored. </Callout Run the development server npm run dev Open http://localhost:3000. You should see the Diplens homepage with the repository search field. Before next dev starts, npm runs predev , which rebuilds the documentation search index ( scripts/build-docs-index.mjs ). A healthy start prints something like: [docs-index] wrote 11 page(s) to lib/docs/search-index.json ✓ Ready in ... Production build npm run build npm run start npm run build also runs prebuild (the same search-index step) before next build . Verify the install Run the quality gates — all four must pass before you change anything: npm run lint ESLint npm run typecheck tsc --noEmit npm test vitest run npm run build production build Then exercise the app: search for a public repository (for example vercel/next.js ) and confirm the report page renders metrics, charts, and analysis sections. Common setup errors Cannot find module 'next' or similar — node modules is missing or incomplete. Re-run npm install in the project root. Rate-limit errors while testing repeatedly — unauthenticated GitHub access is limited to 60 requests/hour per IP. Add a GITHUB TOKEN (see Configuration) or wait for the limit window to reset. Port 3000 already in use — stop the other process or run npm run dev -- -p 3001 . TypeScript errors after pulling — run npm install again; the lockfile may have changed. Next step Continue to Quick Start for the shortest path from this clean checkout to a working, shareable report."
+    },
+    {
+      "slug": "quick-start",
+      "title": "Quick Start",
+      "description": "The shortest verified path from a clean checkout to a live report.",
+      "headings": [
+        {
+          "title": "Prerequisites",
+          "id": "prerequisites"
+        },
+        {
+          "title": "1. Start the server",
+          "id": "1-start-the-server"
+        },
+        {
+          "title": "2. Search for a repository",
+          "id": "2-search-for-a-repository"
+        },
+        {
+          "title": "3. What to expect",
+          "id": "3-what-to-expect"
+        },
+        {
+          "title": "4. Verify it works",
+          "id": "4-verify-it-works"
+        },
+        {
+          "title": "5. Where to go next",
+          "id": "5-where-to-go-next"
+        }
+      ],
+      "body": "Prerequisites Finish Installation: Node.js 20+, a clone of dipeshdarks/DipAi, and npm install completed. An optional GITHUB TOKEN in .env.local is recommended if you will test many repositories. 1. Start the server npm run dev Wait for the Ready line, then open http://localhost:3000. 2. Search for a repository Type owner/repo or a full GitHub URL into the search field and press Enter (or press <kbd class=\"kbd\" /</kbd to focus the field first). Both of these work: vercel/next.js https://github.com/vercel/next.js Validation happens client- and server-side via parseRepo in lib/validation.ts before any network request. Invalid input shows Enter owner/repo or a github.com URL. and no request is made. 3. What to expect You are redirected to the canonical report URL: http://localhost:3000/repo/vercel/next.js The report page streams a loading skeleton, then renders: Overview — stars, forks, open issues (may include PRs; labelled on the card), default branch, license, description, last push. Commit activity — weekly commit counts for the past year. If GitHub returns HTTP 202 (statistics still being computed), the chart shows a \"still computing\" state with a reload hint instead of zeros. Contributors — top contributors and a total count from GitHub's pagination. Releases — latest published releases (drafts are filtered out). Languages — byte breakdown with percentages. Health signals — four explainable heuristics, each with the data behind the label. Deep analysis — architecture, code quality, security, dependencies, tests/CI, and findings sections produced by the static-analysis engine. All results are candidates with evidence; Diplens never executes repository code. 4. Verify it works Three quick checks: The overview cards show real numbers that match the repository on github.com. The commit-activity chart renders bars (or the explicit \"stats pending\" state). The Share report button copies the canonical /repo/{owner}/{repo} link to your clipboard. You can also confirm the docs and API surfaces directly: http://localhost:3000/docs — this documentation. http://localhost:3000/api/file?owner=vercel\\&repo=next.js\\&path=package.json\\&ref=main — the size-capped file-viewer API (JSON). 5. Where to go next Core Concepts — how reports, health signals, and analysis budgets work. Features — every implemented feature with source links. Examples — copyable commands, URLs, and code samples. Troubleshooting — what to do when something looks wrong. <Callout type=\"tip\" title=\"Try a small repository first\" Deep analysis is budget-limited (24 files by default). Small-to-medium repositories produce the fastest, most complete reports while you are learning the tool. </Callout"
+    },
+    {
+      "slug": "core-concepts",
+      "title": "Core Concepts",
+      "description": "Reports, heuristics, coverage, budgets, and the static-only policy.",
+      "headings": [
+        {
+          "title": "The report model",
+          "id": "the-report-model"
+        },
+        {
+          "title": "Partial failures are first-class",
+          "id": "partial-failures-are-first-class"
+        },
+        {
+          "title": "Health signals are heuristics",
+          "id": "health-signals-are-heuristics"
+        },
+        {
+          "title": "Deep analysis categories",
+          "id": "deep-analysis-categories"
+        },
+        {
+          "title": "Findings carry evidence",
+          "id": "findings-carry-evidence"
+        },
+        {
+          "title": "Budgets",
+          "id": "budgets"
+        },
+        {
+          "title": "The static-only policy",
+          "id": "the-static-only-policy"
+        },
+        {
+          "title": "Caching and timeouts",
+          "id": "caching-and-timeouts"
+        },
+        {
+          "title": "Next step",
+          "id": "next-step"
+        }
+      ],
+      "body": "The report model A report is the normalized result of fetching one public repository. Its shape is the Report type in types/report.ts : repo: RepoSummary; contributors: ContributorSummary[] | null; contributorCount: number | null; weeks: WeeklyActivity[] | null; statsPending: boolean; releases: ReleaseSummary[] | null; languages: LanguageStat[] | null; sectionErrors: SectionErrors; checkedAt: string; }; Two invariants matter everywhere in the codebase: Missing is not zero. A value that could not be fetched is null and renders as — , never as a fake 0 . Chart datasets that are empty render an explicit empty state. Raw payloads never reach the UI. GitHub's snake case payloads are converted by the normalizers in lib/github.ts ( normalizeRepo , normalizeRelease , normalizeContributor , normalizeActivity , normalizeLanguages ) into the stable camelCase types above. Partial failures are first-class getReport fetches the repository plus five satellite endpoints in parallel (contributors, contributor count, commit activity, releases, languages). A failure in one satellite does not fail the report — it records a message in sectionErrors and the affected UI section shows the message instead of data: | Section | sectionErrors key | Shown when | |---|---|---| | Contributors | contributors | contributor fetch failed | | Releases | releases | releases fetch failed | | Commit activity | stats | stats fetch failed and it was not a 202 pending | | Languages | languages | languages fetch failed | The repository itself ( repo ) is required: if it cannot be fetched, the page renders the not-found or error state. Health signals are heuristics healthSignals(report) in lib/health.ts returns four signals. Each carries a label ( Active / Moderate / Needs attention / Unknown ) and a human-readable detail that states the rule: | Signal | Rule (simplified) | |---|---| | Recent activity | days since last push: ≤30 → Active, ≤180 → Moderate, else Needs attention; missing timestamp → Unknown | | Release recency | same day buckets against the latest published release; no releases → Unknown | | Community interest | stars + forks ≥ 100 → Active, else Moderate (popularity is explicitly not a quality measure) | | Repository maintenance | archived → Needs attention; has license + description → Active; else Moderate | <Callout type=\"info\" title=\"Not an official GitHub score\" These labels are Diplens heuristics calculated from visible data. They are not an official GitHub health rating, and the UI never invents a numeric score. </Callout summarizeWeeks derives chart summaries (total, peak week, quiet week, active-week count) from the weekly commit dataset for the activity section. Deep analysis categories The deep-analysis result ( DeepAnalysis in types/analysis.ts ) groups work into categories: architecture, quality, security, dependencies, tests/CI, activity, and findings. Coverage of each category is tracked explicitly ( Coverage / CategoryCoverage ) with status complete , partial , or unavailable , and every skipped file is recorded with a reason ( too-large , budget-exhausted , binary , fetch-failed ). Findings carry evidence Every finding produced by the engine (defects, taint candidates, secret-pattern matches) is normalized through lib/analysis/evidence.ts : severity : critical / high / medium / low / info confidence : high / medium / low status : verified / heuristic / unavailable evidence : file path + line range (+ snippet where available) A taint path is always presented as a candidate with sanitizers, preconditions, and false-positive caveats — never as a confirmed exploit. Budgets Analysis is hard-limited by budgets in lib/analysis/budgets.ts : | Budget field | DEFAULT BUDGET (used in production) | DEEP BUDGET (forensic) | |---|---|---| | maxFiles | 24 | 250 | | maxFileBytes | 196,608 (192 KB) | 262,144 (256 KB) | | maxTotalChars | 400,000 | 4,000,000 | | maxTreeEntries | 12,000 | 30,000 | | maxDepth | 8 | 12 | | requestTimeoutMs | 8,000 | 12,000 | | maxApiRequests | 40 | 60 | | maxDirTraversals | 6 | 6 | The report route runs with DEFAULT BUDGET . Files skipped by budget are reported as not inspected — they are never silently ignored. The static-only policy Diplens never executes repository code . Source text is fetched from raw.githubusercontent.com (pinned to a commit SHA), parsed in memory with tree-sitter WASM grammars, and analysed with pure functions. There is no eval , no subprocess, no package installation of the analysed repository. Repository content is treated as untrusted data throughout, and secret-shaped strings are redacted before display ( lib/analysis/redact.ts ). Caching and timeouts The GitHub client in lib/github.ts applies Next.js fetch revalidation per endpoint: | Endpoint | Revalidate (seconds) | |---|---| | Repository metadata | 300 | | Contributors | 600 | | Commit activity | 900 | | Releases | 600 | | Languages | 900 | Every request has an 8-second timeout ( AbortSignal.timeout ). Rate-limit responses (HTTP 429, or 403 with x-ratelimit-remaining: 0 ) are mapped to a typed GitHubError with a retryAfterSeconds hint when GitHub provides one. Next step See Features for how these concepts surface in the UI, or Architecture for the module-by-module layout."
+    },
+    {
+      "slug": "features",
+      "title": "Features",
+      "description": "Every implemented feature, what it does, and where it lives in the code.",
+      "headings": [
+        {
+          "title": "Repository search",
+          "id": "repository-search"
+        },
+        {
+          "title": "Shareable report page",
+          "id": "shareable-report-page"
+        },
+        {
+          "title": "Overview metrics",
+          "id": "overview-metrics"
+        },
+        {
+          "title": "Commit activity chart",
+          "id": "commit-activity-chart"
+        },
+        {
+          "title": "Contributors & languages",
+          "id": "contributors-languages"
+        },
+        {
+          "title": "Releases",
+          "id": "releases"
+        },
+        {
+          "title": "Health signals",
+          "id": "health-signals"
+        },
+        {
+          "title": "Deep static analysis pipeline",
+          "id": "deep-static-analysis-pipeline"
+        },
+        {
+          "title": "Report sections for analysis",
+          "id": "report-sections-for-analysis"
+        },
+        {
+          "title": "File viewer API",
+          "id": "file-viewer-api"
+        },
+        {
+          "title": "Documentation site",
+          "id": "documentation-site"
+        },
+        {
+          "title": "Planned & out of scope",
+          "id": "planned-out-of-scope"
+        }
+      ],
+      "body": "This page documents implemented features only. Planned or out-of-scope items are collected at the bottom, clearly labelled. Repository search What it does. Accepts owner/repo or a full github.com URL, validates it, and navigates to the report. Why it exists. The entry point must reject garbage before it costs a network round-trip. How to use it. Type into the homepage field and press Enter; press <kbd class=\"kbd\" /</kbd to focus the field from anywhere. Example inputs that parse successfully: vercel/next.js https://github.com/vercel/next.js https://www.github.com/dipeshdarks/DipAi Source. components/RepoSearch.tsx , lib/validation.ts . Limitations. Only github.com / www.github.com hosts are accepted; gitlab/bitbucket URLs are rejected. Repository names cannot start or end with a dot; .git suffixes are stripped. Shareable report page What it does. Every repository has a canonical, crawlable URL at /repo/{owner}/{repo} that renders the full report server-side. Why it exists. Reports should be shareable as plain links — no accounts, no expiring tokens. How to use it. Navigate to any report and click Share report ; the canonical URL is copied to the clipboard. Source. [ app/repo/[owner]/[repo]/page.tsx ](https://github.com/dipeshdarks/DipAi/blob/main/app/repo/[owner]/[repo]/page.tsx), components/ShareReportButton.tsx . Limitations. Because the route streams its loading shell, an unknown repository renders the correct not-found UI but the HTTP status is 200 rather than 404 (Next.js streaming behaviour). Overview metrics What it does. Cards for stars, forks, open issues, default branch, license, primary language, description, created date, and last push — all from the normalized RepoSummary . Source. components/report/OverviewSection.tsx , lib/github.ts . Limitations. GitHub's open issues count includes pull requests; the card is labelled accordingly. Commit activity chart What it does. Weekly commit counts for the past year from GitHub's stats/commit activity endpoint, rendered as a bar chart (Recharts) with peak/quiet/total summaries. Source. components/CommitActivityChart.tsx , components/report/GitActivitySection.tsx . Limitations. GitHub can return HTTP 202 while statistics are computed; the UI shows a \"still computing\" state with a reload hint instead of inventing zeros. Contributors & languages What it does. Shows the top 8 contributors with avatars and contribution counts, a total contributor count derived from pagination, and a language breakdown by bytes with percentages. Source. components/report/ContributorsSection.tsx , components/report/DependenciesSection.tsx . Limitations. Contributor counts reflect GitHub's reported commit totals, not a complete measure of contribution (reviews, issues, and co-authored commits are not counted here). Releases What it does. Lists the latest 5 published releases with tag, title, and publish date. Drafts are filtered out. Source. components/report/ReportShell.tsx . Health signals What it does. Four explainable heuristics (recent activity, release recency, community interest, maintenance), each showing the exact data and rule behind the label. Source. lib/health.ts , components/ui.tsx . Limitations. Heuristics, not an official GitHub rating. Missing data shows Unknown , never a guess. Deep static analysis pipeline What it does. For each report, an analysis engine runs a staged pipeline over the repository's source text: Acquire — pin the tree to a commit SHA; fetch prioritized source files from raw.githubusercontent.com within budget. Classify — source / test / config / docs / vendor / generated / binary. Parse — tree-sitter WASM grammars for TypeScript, Python, and Go; failed parses degrade to partial, never crash. Symbols — stable IDs, import resolution, reference resolution ( resolved / ambiguous / unresolved ). Call graph — confirmed edges from resolved calls; convention-based test links marked approximate. Execution paths — walks from detected entry points down confirmed edges only. Taint candidates — source → sink paths with sanitizers and preconditions, from language-specific catalogs. Defect detectors — logic, error-handling, async, resource, and contract patterns with verification plans. Architecture — module graph, entry points, subsystems. Dependencies — package.json , requirements.txt , go.mod , Cargo.toml manifests. Security — secret-pattern scan with redaction. Quality / tests-CI / activity — complexity samples, workflow and test detection, commit summaries. Why it exists. Metadata tells you activity ; static analysis tells you structure and risk . Source. lib/analysis/run.ts and the rest of lib/analysis/ . Limitations. Budget-capped (24 files / 192 KB per file by default). Results are static candidates with evidence , not confirmed defects or exploits. Analysed languages are TypeScript/JavaScript (via the TS grammar), Python, and Go. Repository code is never executed. Report sections for analysis The analysis output is rendered in dedicated sections: architecture, code quality, security, dependencies, tests/CI, coverage, file explorer, and findings. Source. components/report/ ( ArchitectureSection , CodeQualitySection , SecuritySection , DependenciesSection , TestsCiSection , CoverageSection , FileExplorerSection , FindingsSection ). File viewer API What it does. GET /api/file returns the text of a single file from a public repository, size-capped at 256 KB, with path-traversal protection. Example. curl \"http://localhost:3000/api/file?owner=vercel&repo=next.js&path=package.json&ref=main\" Source. app/api/file/route.ts . Limitations. Text files only (binary → 415); files over the cap → 413; one file per request. Documentation site What it does. This site: MDX-authored pages under content/docs/ , generated table of contents, local full-text search (<kbd class=\"kbd\" ⌘K</kbd / <kbd class=\"kbd\" Ctrl+K</kbd ), dark/light themes, copyable code blocks, and Mermaid architecture diagrams — served from the same Next.js app at /docs . Source. lib/docs/ , components/docs/ , content/docs/ , app/docs/ . Planned & out of scope These items appear in project planning notes or the README but are not implemented . They are listed so the docs never over-promise: Private repository analytics GitHub account OAuth / sign-in Billing, teams, and multi-tenant features Predictive AI scoring Full code scanning or vulnerability scanning (the built-in secret-pattern scan is heuristic and local) Official GitHub \"health score\" (Diplens heuristics are explicitly not that) <Callout type=\"warning\" title=\"Found a gap between docs and code?\" Open an issue: github.com/dipeshdarks/DipAi/issues. Documentation accuracy is treated as a bug. </Callout"
+    },
+    {
+      "slug": "architecture",
+      "title": "Architecture",
+      "description": "Directory layout, modules, execution flow, and data flow.",
+      "headings": [
+        {
+          "title": "Directory layout",
+          "id": "directory-layout"
+        },
+        {
+          "title": "Main modules",
+          "id": "main-modules"
+        },
+        {
+          "title": "Request flow",
+          "id": "request-flow"
+        },
+        {
+          "title": "Analysis pipeline flow",
+          "id": "analysis-pipeline-flow"
+        },
+        {
+          "title": "Data flow",
+          "id": "data-flow"
+        },
+        {
+          "title": "External integrations",
+          "id": "external-integrations"
+        },
+        {
+          "title": "Configuration & error handling",
+          "id": "configuration-error-handling"
+        },
+        {
+          "title": "How modules communicate",
+          "id": "how-modules-communicate"
+        },
+        {
+          "title": "Next step",
+          "id": "next-step"
+        }
+      ],
+      "body": "Directory layout The repository is a single Next.js App Router project: DipAi/ ├── app/ │ ├── api/file/route.ts size-capped file-viewer API │ ├── docs/ this documentation (/docs) │ ├── repo/[owner]/[repo]/ report route (+ loading/error/not-found) │ ├── layout.tsx root shell: header, footer, theme │ ├── page.tsx homepage with repository search │ ├── sitemap.ts robots.ts SEO metadata routes │ └── globals.css design tokens (dark/light), prose, hljs theme ├── components/ │ ├── RepoSearch.tsx search form (client) │ ├── ShareReportButton.tsx clipboard share (client) │ ├── CommitActivityChart.tsx Recharts bar chart (client) │ ├── ui.tsx MetricCard, Panel, Chip, HealthSignal… │ ├── report/ one component per report section │ └── docs/ docs site components (sidebar, TOC, search…) ├── content/docs/ MDX sources for this documentation ├── lib/ │ ├── validation.ts Zod input parsing (owner/repo, file paths) │ ├── github.ts typed GitHub client + normalizers │ ├── github/endpoints.ts tree/file/CI endpoints for the engine │ ├── health.ts explainable health heuristics │ ├── analysis/ deep static-analysis pipeline │ └── docs/ docs registry, search, MDX map ├── types/ │ ├── report.ts normalized report types │ └── analysis.ts analysis engine types ├── scripts/build-docs-index.mjs search-index generator (predev/prebuild) └── package.json scripts, deps, version Main modules | Module | Responsibility | |---|---| | lib/validation.ts | Parse and validate owner/repo strings, GitHub URLs, and repository file paths. Pure; no I/O. | | lib/github.ts | Authenticated (optional) fetch wrapper gh() with 8s timeouts, per-endpoint revalidation, typed GitHubError s, HTTP 202 pending handling, and the report assembly getReport() . | | lib/github/endpoints.ts | Lower-level endpoints used by the analysis engine: head SHA, git tree, raw file content, commits, branches, tags, workflows, code-scanning probe. | | lib/health.ts | healthSignals() and summarizeWeeks() — pure, unit-tested heuristics. | | lib/analysis/run.ts | Orchestrates the full deep-analysis pipeline ( runDeepAnalysis ). | | lib/analysis/acquire/ | SHA-pinned raw-file acquisition with concurrency limits and byte budgets. | | lib/analysis/lang/ | tree-sitter WASM loaders and per-language extractors (TypeScript, Python, Go) + complexity. | | lib/analysis/index/ | Symbol tables, import/reference resolution. | | lib/analysis/graph/ | Call graph and execution-path walks over resolved edges. | | lib/analysis/flow/ | Taint catalogs (sources/sinks/sanitizers) and interprocedural taint search. | | lib/analysis/defects/ | Pattern-based defect detectors with verification plans. | | lib/analysis/architecture.ts | Module graph + subsystem summary. | | lib/analysis/dependencies.ts | Manifest parsers (npm, pip, Go modules, Cargo). | | lib/analysis/security.ts + redact.ts | Secret-pattern scan; redaction of matched values before display. | | types/ | Stable application types shared by the engine and UI. | Request flow flowchart TD U[User] -- H[\"Homepage search (parseRepo)\"] H -- R[\"/repo/owner/repo route\"] R -- GH[\"lib/github.ts · gh()\"] GH -- N[Normalizers] N -- REP[Report] R -- DA[\"runDeepAnalysis(DEFAULT BUDGET)\"] DA -- AN[DeepAnalysis] REP -- UI[ReportShell sections] AN -- UI UI -- S[Shareable URL] Everything inside the dashed server boundary runs in Next.js server components and route handlers on the server. The browser receives only rendered HTML and normalized data needed by client islands (chart, share button, file explorer). Analysis pipeline flow flowchart LR A[Acquire] -- B[Classify] B -- C[Parse] C -- D[Symbols] D -- E[Call graph] E -- F[Execution paths] E -- G[Taint candidates] E -- H[Defect detectors] D -- I[Architecture] C -- J[Dependencies] C -- K[Security scan] C -- L[Quality] C -- M[Tests & CI] Each stage records a StageRecord with status complete / partial / unavailable / failed / skipped , so the UI can show exactly what ran and what did not. Data flow Input — raw user string → parseRepo → RepoRef { owner, repo } or null . Fetch — getReport(owner, repo) fans out five GitHub REST calls through gh() ; failures become sectionErrors , not exceptions (except the primary repository fetch). Normalize — raw payloads → Report (camelCase, nullable-not-zero). Analyse — runDeepAnalysis(report, { budget }) acquires source text pinned to the head SHA, runs the pipeline, and returns DeepAnalysis + coverage. Engine exceptions are caught at the route boundary and surfaced as analysisError . Render — server components compose ReportShell sections; client islands receive only the props they need. Share — the URL /repo/{owner}/{repo} is the canonical artifact. External integrations | Integration | Purpose | Notes | |---|---|---| | api.github.com REST | repository, contributors, stats, releases, languages, trees, workflows | API version 2022-11-28 ; optional Bearer token | | raw.githubusercontent.com | source text for analysis | SHA-pinned; does not consume the REST rate quota | | Recharts | commit-activity chart | client component | | tree-sitter WASM | parsing | web-tree-sitter + tree-sitter-wasms ; externalized in next.config.js | Configuration & error handling Configuration is a single optional env var: GITHUB TOKEN (see Configuration). GitHubError carries a kind ( not found , rate limited , unauthorized , forbidden , invalid , upstream , timeout , network ) that routes map to HTTP statuses and user-facing messages. The report route turns not found into the not-found page; other kinds rethrow into the message-aware error boundary ( app/repo/[owner]/[repo]/error.tsx ). The analysis run is wrapped in its own try/catch: a failing engine never blanks the metadata report. The /api/file route validates all four query parameters, re-validates the repo identifier and file path, and maps upstream failures to 404/413/415/429/502/504/500 JSON errors. How modules communicate Server components call lib functions directly ( getReport , runDeepAnalysis , loadSections ); there is no internal HTTP hop. Client components receive primitive props (numbers, strings, arrays) — never class instances or fetch functions. Types flow one way: types/ .ts ← lib/ ← app/ / components/ . UI components never import raw GitHub payload shapes. The docs subsystem ( lib/docs/ ) is independent of the analysis engine: the registry drives navigation/SEO, the build script generates the search index, and MDX pages are statically imported via lib/docs/mdx.ts . Next step For the exact exported surface of these modules, see the API Reference."
+    },
+    {
+      "slug": "api-reference",
+      "title": "API Reference",
+      "description": "Exported functions, types, and routes from the real source code.",
+      "headings": [
+        {
+          "title": "lib/validation.ts",
+          "id": "lib-validation-ts"
+        },
+        {
+          "title": "parseRepo(input: string): RepoRef | null",
+          "id": "parserepo-input-string-reporef-null"
+        },
+        {
+          "title": "encodeRepoPath(owner: string, repo: string): string",
+          "id": "encoderepopath-owner-string-repo-string-string"
+        },
+        {
+          "title": "parseFilePath(raw: string | null | undefined): string | null",
+          "id": "parsefilepath-raw-string-null-undefined-string-null"
+        },
+        {
+          "title": "Constants",
+          "id": "constants"
+        },
+        {
+          "title": "lib/github.ts",
+          "id": "lib-github-ts"
+        },
+        {
+          "title": "gh<T>(path: string, revalidate: number): Promise<GhResult<T>>",
+          "id": "gh-t-path-string-revalidate-number-promise-ghresult-t"
+        },
+        {
+          "title": "getReport(owner: string, repo: string): Promise<Report>",
+          "id": "getreport-owner-string-repo-string-promise-report"
+        },
+        {
+          "title": "class GitHubError extends Error",
+          "id": "class-githuberror-extends-error"
+        },
+        {
+          "title": "Normalizers",
+          "id": "normalizers"
+        },
+        {
+          "title": "lib/health.ts",
+          "id": "lib-health-ts"
+        },
+        {
+          "title": "healthSignals(r: Report, now?: number): Signal[]",
+          "id": "healthsignals-r-report-now-number-signal"
+        },
+        {
+          "title": "summarizeWeeks(weeks: WeeklyActivity[] | null): WeekSummary | null",
+          "id": "summarizeweeks-weeks-weeklyactivity-null-weeksummary-null"
+        },
+        {
+          "title": "daysSince(iso: string | null | undefined, now?: number): number | null",
+          "id": "dayssince-iso-string-null-undefined-now-number-number-null"
+        },
+        {
+          "title": "lib/analysis/budgets.ts",
+          "id": "lib-analysis-budgets-ts"
+        },
+        {
+          "title": "lib/analysis/run.ts",
+          "id": "lib-analysis-run-ts"
+        },
+        {
+          "title": "runDeepAnalysis(report: Report, options?: { budget?: AnalysisBudget }): Promise<DeepAnalysis>",
+          "id": "rundeepanalysis-report-report-options-budget-analysisbudget-promise-deepanalysis"
+        },
+        {
+          "title": "lib/analysis — key stage exports",
+          "id": "lib-analysis-key-stage-exports"
+        },
+        {
+          "title": "HTTP routes",
+          "id": "http-routes"
+        },
+        {
+          "title": "GET /api/file",
+          "id": "get-api-file"
+        },
+        {
+          "title": "Types",
+          "id": "types"
+        },
+        {
+          "title": "Docs subsystem (this site)",
+          "id": "docs-subsystem-this-site"
+        }
+      ],
+      "body": "This reference documents the actual exported symbols in the repository. Every signature was taken from the source file linked beside it. Categories that do not exist in the codebase (for example a CLI) are intentionally omitted. lib/validation.ts lib/validation.ts parseRepo(input: string): RepoRef | null Normalizes user input ( owner/repo or a github.com URL) into a validated RepoRef . Returns null for anything invalid. | Parameter | Type | Description | |---|---|---| | input | string | owner/repo , or an http(s)://github.com/owner/repo URL (optional .git suffix, trailing slashes tolerated). | Returns. { owner, repo } or null . Errors & edge cases. Non-github hosts → null . Extra path segments (issues, tree) → null . Empty segments, . / .. segments → null . Owner must match OWNER RE ; repo must match REPO RE and not start/end with a dot. parseRepo(\"vercel/next.js\"); // { owner: \"vercel\", repo: \"next.js\" } parseRepo(\"https://github.com/dipeshdarks/DipAi.git\"); // { owner: \"dipeshdarks\", repo: \"DipAi\" } parseRepo(\"gitlab.com/foo/bar\"); // null encodeRepoPath(owner: string, repo: string): string URI-encodes both segments for safe interpolation into an API path. encodeRepoPath(\"dipeshdarks\", \"DipAi\"); // \"dipeshdarks/DipAi\" parseFilePath(raw: string | null | undefined): string | null Validates a repository-relative path for the file viewer. Rejects absolute paths, backslashes, control characters, URL-structural characters ( < : \" ? % ), . / .. segments, more than 20 segments, and paths over 500 characters. parseFilePath(\"src/app/page.tsx\"); // \"src/app/page.tsx\" parseFilePath(\"../../etc/passwd\"); // null Constants OWNER RE — GitHub owner-name regex (1–39 chars, alphanumeric + hyphens, no leading/trailing hyphen). REPO RE — GitHub repo-name regex (1–100 chars, [A-Za-z0-9. -] ). repoRefSchema — Zod schema for { owner, repo } . type RepoRef = { owner: string; repo: string } . lib/github.ts lib/github.ts gh<T (path: string, revalidate: number): Promise<GhResult<T Low-level GitHub REST wrapper. Prefixes https://api.github.com , attaches auth headers (optional GITHUB TOKEN ), applies an 8-second timeout and Next.js revalidation. Returns. { ok: true, data: T, res: Response } or { ok: false, error: GitHubError, pending?: boolean } . pending is true when GitHub answers HTTP 202 (statistics still computing). Errors. Never throws for HTTP failures — they are mapped into GitHubError kinds: not found , rate limited , unauthorized , forbidden , invalid , upstream , timeout , network . getReport(owner: string, repo: string): Promise<Report Assembles the full report: primary repository fetch (throws GitHubError on failure) plus parallel satellite fetches whose failures become sectionErrors . const report = await getReport(\"dipeshdarks\", \"DipAi\"); console.log(report.repo.fullName, report.weeks?.length ?? 0, report.statsPending); class GitHubError extends Error | Field | Type | Description | |---|---|---| | kind | GitHubErrorKind | typed failure category | | message | string | user-facing message | | retryAfterSeconds? | number | present on rate-limit errors when GitHub sends reset info | Normalizers normalizeRepo , normalizeRelease , normalizeContributor , normalizeActivity , normalizeLanguages — convert raw GitHub payloads to the types in types/report.ts . Exported for unit tests. lib/health.ts lib/health.ts healthSignals(r: Report, now?: number): Signal[] Returns the four explainable health signals. now defaults to Date.now() (injectable for tests). const report = await getReport(\"dipeshdarks\", \"DipAi\"); for (const s of healthSignals(report)) { console.log(s.title, \"→\", s.label, (${s.detail}) ); } summarizeWeeks(weeks: WeeklyActivity[] | null): WeekSummary | null Total, peak week, quiet week, week count, and active-week count. Returns null for empty input. daysSince(iso: string | null | undefined, now?: number): number | null Whole days between an ISO timestamp and now ; null for missing/invalid dates. lib/analysis/budgets.ts lib/analysis/budgets.ts | Export | Description | |---|---| | DEFAULT BUDGET | production budget (24 files, 192 KB/file, 400 K chars, depth 8, 40 requests) | | DEEP BUDGET | forensic budget (250 files, 256 KB/file, 4 M chars, depth 12, 60 requests) | | budgetView(b) | strips runtime-only fields for display | | type AnalysisBudget | budget shape | lib/analysis/run.ts lib/analysis/run.ts runDeepAnalysis(report: Report, options?: { budget?: AnalysisBudget }): Promise<DeepAnalysis Runs the full static-analysis pipeline over the repository described by report . Used by the report route with DEFAULT BUDGET : const analysis = await runDeepAnalysis(report, { budget: DEFAULT BUDGET }); Throws only on unexpected engine failures; the report route catches this and shows analysisError beside a fully rendered metadata report. lib/analysis — key stage exports | Function | Module | Purpose | |---|---|---| | acquireRaw(options) | acquire/raw.ts | SHA-pinned file acquisition with limits | | classifyFile(path, size) | acquire/classify.ts | file-role classification | | prioritizeFiles(entries, …) | discovery.ts | ranking which files to fetch within budget | | buildCallGraph(table, symbols) | graph/callgraph.ts | resolved call edges | | analyzeTaint(input, budget?) | flow/taint.ts | source→sink candidate search | | detectDefects(input) | defects/detect.ts | pattern-based defect findings | | buildArchitectureReport(input) | architecture.ts | module graph + subsystems | | buildDependencyReport(…) | dependencies.ts | manifest aggregation | | makeFinding(input) / sortFindings(f) | evidence.ts | finding normalization | | computeComplexity(root, language) | lang/complexity.ts | per-function complexity samples | All of these are pure with respect to the network (I/O happens only in acquire ). HTTP routes GET /api/file app/api/file/route.ts | Query param | Required | Description | |---|---|---| | owner | yes | repository owner | | repo | yes | repository name | | path | yes | repository-relative file path (validated) | | ref | yes | git ref/SHA to read from | Success (200). { path, content, size, truncated, lines } . | Error status | error code | Meaning | |---|---|---| | 400 | invalid | missing/invalid parameters or path traversal attempt | | 404 | not-found | file does not exist at that ref | | 413 | too-large | file exceeds the 256 KB viewer limit | | 415 | binary | file is not displayable text | | 429 | rate-limited | GitHub rate limit reached | | 502 | upstream | GitHub failure | | 504 | timeout | GitHub request timed out | curl \"http://localhost:3000/api/file?owner=dipeshdarks&repo=DipAi&path=package.json&ref=main\" Types types/report.ts — Report , RepoSummary , WeeklyActivity , ReleaseSummary , ContributorSummary , LanguageStat , SectionErrors , Signal , SignalLabel . types/analysis.ts — DeepAnalysis , Finding , Severity , Confidence , Evidence , Coverage , ArchitectureReport , SecurityReport , QualityReport , TestsCiReport , DependencyReport , ActivityReport , AnalysisBudgetView , and the engine record types. Docs subsystem (this site) | Export | Module | Purpose | |---|---|---| | DOC PAGES , NAV , docPage() , prevNext() , GITHUB , APP VERSION | lib/docs/registry.ts | navigation, metadata, GitHub links | | runSearch(docs, query, limit?) , extractHeadings(src) , stripMarkdown(src) , searchIndex(pages) | lib/docs/search-core.ts | pure search (bundled client-side) | | loadDocSources() , loadSections(slug) , buildSearchIndex() | lib/docs/search.ts | server-side fs loaders | | slugify(text) , textOf(node) | lib/docs/slug.ts | anchor ids shared by headings, TOC, and search | <Callout type=\"info\" title=\"No CLI exists\" DipAi is a web application. There is no dipai binary, no programmatic SDK package, and no webhook API. The exported functions above are the in-repo module surface, importable with the @/ path alias from inside the project. </Callout"
+    },
+    {
+      "slug": "configuration",
+      "title": "Configuration",
+      "description": "Verified environment variables and configuration files.",
+      "headings": [
+        {
+          "title": "Environment variables",
+          "id": "environment-variables"
+        },
+        {
+          "title": "Without a token",
+          "id": "without-a-token"
+        },
+        {
+          "title": "Creating a token (GitHub UI)",
+          "id": "creating-a-token-github-ui"
+        },
+        {
+          "title": "npm scripts",
+          "id": "npm-scripts"
+        },
+        {
+          "title": "Configuration files",
+          "id": "configuration-files"
+        },
+        {
+          "title": "Ports & URLs",
+          "id": "ports-urls"
+        },
+        {
+          "title": "What is intentionally not configurable",
+          "id": "what-is-intentionally-not-configurable"
+        }
+      ],
+      "body": "Environment variables There is exactly one environment variable, and it is optional. | Variable | Required | Where | Purpose | |---|---|---|---| | GITHUB TOKEN | No | server only ( .env.local ) | Raises the GitHub REST rate limit from 60 req/h (unauthenticated) to 5,000 req/h. Use a free personal access token with public read-only scope. | Verified in .env.example : Optional: raises GitHub rate limit from 60/h to 5000/h. Server-only. GITHUB TOKEN= The token is read exclusively in lib/github.ts when building request headers: if (process.env.GITHUB TOKEN) { h.Authorization = Bearer ${process.env.GITHUB TOKEN} ; } <Callout type=\"warning\" title=\"Rules that keep the token safe\" Never prefix it with NEXT PUBLIC — that would compile it into browser bundles. Never commit .env.local (it is listed in .gitignore ). Use the minimum scope: public read-only . Diplens never writes to GitHub. </Callout Without a token The app is fully functional for light usage. Unauthenticated public access is limited to 60 requests per hour per IP; beyond that, report sections show rate-limit messages (see Troubleshooting). Creating a token (GitHub UI) GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens (or classic tokens with public read-only scope). Grant read access to public repositories. Copy the token into .env.local as GITHUB TOKEN=… . Restart npm run dev — Next.js only loads env files at startup. npm scripts From package.json : | Script | Command | Purpose | |---|---|---| | predev | node scripts/build-docs-index.mjs | regenerates lib/docs/search-index.json before dev | | dev | next dev | development server on port 3000 | | prebuild | node scripts/build-docs-index.mjs | regenerates the search index before production build | | build | next build | production build | | start | next start | serve the production build | | lint | next lint | ESLint (config: .eslintrc.json → next/core-web-vitals ) | | typecheck | tsc --noEmit | TypeScript in strict mode | | test | vitest run | unit + component tests | | test:watch | vitest | test watch mode | Configuration files | File | Role | |---|---| | next.config.js | MDX pipeline ( remark-gfm , rehype-highlight ), pageExtensions include mdx , tree-sitter packages marked as server externals, reactStrictMode | | tailwind.config.ts | design-token colors mapped to CSS variables (dark/light), Geist font families | | tsconfig.json | strict TypeScript; path alias @/ → project root | | vitest.config.ts | Vitest with jsdom + React plugin | | vitest.setup.ts | Testing Library / jest-dom setup | | .eslintrc.json | extends next/core-web-vitals | | .gitignore | ignores node modules , .next , .env .local , logs | Ports & URLs | URL | Meaning | |---|---| | http://localhost:3000/ | homepage (search) | | http://localhost:3000/repo/{owner}/{repo} | shareable report | | http://localhost:3000/docs | this documentation | | http://localhost:3000/api/file?… | file-viewer API | To change the dev port: npm run dev -- -p 3001 . What is intentionally not configurable These are fixed in code on purpose (documented so you know where to change them if you fork): Analysis budgets in production use DEFAULT BUDGET (swap to DEEP BUDGET in app/repo/[owner]/[repo]/page.tsx if you want deeper runs). Cache revalidation TTLs per endpoint ( lib/github.ts ). The 8-second GitHub timeout and 256 KB file-viewer cap. Supported analysis languages (TypeScript/JavaScript, Python, Go)."
+    },
+    {
+      "slug": "examples",
+      "title": "Examples",
+      "description": "Copyable commands, URLs, and code samples that match the codebase.",
+      "headings": [
+        {
+          "title": "Install and run",
+          "id": "install-and-run"
+        },
+        {
+          "title": "Optional token setup",
+          "id": "optional-token-setup"
+        },
+        {
+          "title": "Quality gates",
+          "id": "quality-gates"
+        },
+        {
+          "title": "Analyze a repository (UI)",
+          "id": "analyze-a-repository-ui"
+        },
+        {
+          "title": "File-viewer API",
+          "id": "file-viewer-api"
+        },
+        {
+          "title": "Use the validation helpers in your own code",
+          "id": "use-the-validation-helpers-in-your-own-code"
+        },
+        {
+          "title": "Fetch a report programmatically (server-side)",
+          "id": "fetch-a-report-programmatically-server-side"
+        },
+        {
+          "title": "Run deep analysis yourself",
+          "id": "run-deep-analysis-yourself"
+        },
+        {
+          "title": "Work with the docs content (this site)",
+          "id": "work-with-the-docs-content-this-site"
+        },
+        {
+          "title": "Programmatic search helpers (for tests or tooling)",
+          "id": "programmatic-search-helpers-for-tests-or-tooling"
+        }
+      ],
+      "body": "Every command and snippet on this page is copied from the repository's actual configuration and source. Install and run git clone https://github.com/dipeshdarks/DipAi.git cd DipAi npm install npm run dev PowerShell: git clone https://github.com/dipeshdarks/DipAi.git Set-Location DipAi npm install npm run dev Open http://localhost:3000. Optional token setup cp .env.example .env.local edit .env.local and set: GITHUB TOKEN=ghp your token Copy-Item .env.example .env.local Quality gates npm run lint npm run typecheck npm test npm run build Analyze a repository (UI) Search inputs that parse successfully: vercel/next.js https://github.com/vercel/next.js https://github.com/dipeshdarks/DipAi Resulting report URLs (share these): http://localhost:3000/repo/vercel/next.js http://localhost:3000/repo/dipeshdarks/DipAi File-viewer API curl \"http://localhost:3000/api/file?owner=dipeshdarks&repo=DipAi&path=package.json&ref=main\" PowerShell: Invoke-RestMethod \"http://localhost:3000/api/file?owner=dipeshdarks&repo=DipAi&path=package.json&ref=main\" Expected JSON shape on success: { \"path\": \"package.json\", \"content\": \"{ ... }\", \"size\": 1083, \"truncated\": false, \"lines\": 49 } Use the validation helpers in your own code Inside the project (path alias @/ ): const ref = parseRepo(\"https://github.com/dipeshdarks/DipAi\"); if (ref) { const apiPath = /repos/${encodeRepoPath(ref.owner, ref.repo)} ; console.log(apiPath); // /repos/dipeshdarks/DipAi } console.log(parseFilePath(\"lib/github.ts\")); // \"lib/github.ts\" console.log(parseFilePath(\"../secrets.env\")); // null Fetch a report programmatically (server-side) try { const report = await getReport(\"dipeshdarks\", \"DipAi\"); console.log(report.repo.fullName); console.log(report.sectionErrors); // e.g. { contributors: \"Contributor data is unavailable.\" } for (const signal of healthSignals(report)) { console.log( ${signal.title}: ${signal.label} — ${signal.detail} ); } } catch (e) { if (e instanceof GitHubError) { console.error(e.kind, e.message, e.retryAfterSeconds); } throw e; } Run deep analysis yourself const report = await getReport(\"dipeshdarks\", \"DipAi\"); // production budget (what the report route uses) const analysis = await runDeepAnalysis(report, { budget: DEFAULT BUDGET }); console.log(analysis.coverage.status); // forensic budget (more files, larger cap) // const analysis = await runDeepAnalysis(report, { budget: DEEP BUDGET }); Work with the docs content (this site) Add or edit an MDX page: content/docs/my-page.mdx ← the markdown source lib/docs/pages.json ← register slug + title + description lib/docs/mdx.ts ← add the static import Then regenerate the search index (also runs automatically on predev / prebuild ): node scripts/build-docs-index.mjs Search is queried client-side against the bundled index; there is no search HTTP endpoint. Programmatic search helpers (for tests or tooling) extractHeadings(\" Install\\n bash\\nnpm install\\n \\n Usage\"); // [{ title: \"Install\", id: \"install\" }, { title: \"Usage\", id: \"usage\" }] stripMarkdown(\" Hello world \\n\\n- item\"); // \"Hello world item\""
+    },
+    {
+      "slug": "troubleshooting",
+      "title": "Troubleshooting",
+      "description": "Verified failure modes with causes and fixes.",
+      "headings": [
+        {
+          "title": "Rate limit reached",
+          "id": "rate-limit-reached"
+        },
+        {
+          "title": "Commit activity shows “still computing”",
+          "id": "commit-activity-shows-still-computing"
+        },
+        {
+          "title": "Repository not found (but it exists)",
+          "id": "repository-not-found-but-it-exists"
+        },
+        {
+          "title": "Invalid input error in the search box",
+          "id": "invalid-input-error-in-the-search-box"
+        },
+        {
+          "title": "File viewer returns 413 or 415",
+          "id": "file-viewer-returns-413-or-415"
+        },
+        {
+          "title": "Open-issue count seems too high",
+          "id": "open-issue-count-seems-too-high"
+        },
+        {
+          "title": "Contributors count differs from the Contributors tab",
+          "id": "contributors-count-differs-from-the-contributors-tab"
+        },
+        {
+          "title": "Analysis section is partial or missing files",
+          "id": "analysis-section-is-partial-or-missing-files"
+        },
+        {
+          "title": "tree-sitter / WASM errors in development",
+          "id": "tree-sitter-wasm-errors-in-development"
+        },
+        {
+          "title": "Dev server will not start — port in use",
+          "id": "dev-server-will-not-start-port-in-use"
+        },
+        {
+          "title": "Type errors after pulling latest changes",
+          "id": "type-errors-after-pulling-latest-changes"
+        },
+        {
+          "title": "Documentation search returns nothing",
+          "id": "documentation-search-returns-nothing"
+        },
+        {
+          "title": "Still stuck?",
+          "id": "still-stuck"
+        }
+      ],
+      "body": "Each problem below is either verified against the code (the handling exists in source and is linked) or clearly marked as a general suggestion . Rate limit reached Symptoms. Report sections show “GitHub rate limit reached. Try again in a few minutes.” or the /api/file endpoint returns 429 with \"error\": \"rate-limited\" . Cause. Unauthenticated GitHub REST access is limited to 60 requests/hour per IP. The client detects HTTP 429, or HTTP 403 with x-ratelimit-remaining: 0 . Fix. Add a GITHUB TOKEN to .env.local (5,000 req/h) and restart the dev server. If you already have a token, verify it is not prefixed with NEXT PUBLIC and that the server was restarted. retryAfterSeconds (when present on the error) tells you how long to wait. Source. lib/github.ts — isRateLimited , rateLimitSeconds , errorFromResponse . Commit activity shows “still computing” Symptoms. The commit-activity chart shows a pending/202 state instead of bars. Cause. GitHub computes stats/commit activity lazily and answers HTTP 202 until the statistic is ready. This is normal for newly created or rarely accessed repositories. Fix. Wait a minute and reload the report. The UI never fabricates zeros for a pending statistic. Source. lib/github.ts ( pending: true on HTTP 202), statsPending in the report route. Repository not found (but it exists) Symptoms. The report shows the not-found page for a repository you can open in a browser. Checks. The name is exactly owner/repo — case-sensitive as GitHub reports it. The repository is public — private repos are out of scope. The owner has not renamed/moved it (old URLs 404 on GitHub too). Note. The route streams its loading shell, so the HTTP status is 200 even when the visible state is a correct not-found page. This is Next.js streaming behaviour, documented in the repository README. Source. [ app/repo/[owner]/[repo]/page.tsx ](https://github.com/dipeshdarks/DipAi/blob/main/app/repo/[owner]/[repo]/page.tsx) ( notFound() on GitHubError.kind === \"not found\" ). Invalid input error in the search box Symptoms. Enter owner/repo or a github.com URL. appears and no navigation happens. Cause. parseRepo rejected the input. Common triggers: extra path segments ( owner/repo/issues ), non-github hosts, typos in github.com , or empty segments. Fix. Use exactly owner/repo or a plain repository URL on github.com / www.github.com . Source. lib/validation.ts . File viewer returns 413 or 415 Symptoms. GET /api/file answers {\"error\":\"too-large\"} or {\"error\":\"binary\"} . Cause. The viewer caps files at 256 KB ( MAX VIEW BYTES = 262144 ) and only displays text. Fix. View large files directly on GitHub. There is no parameter to raise the cap; it is a deliberate safety limit. Source. app/api/file/route.ts . Open-issue count seems too high Symptoms. The open-issues card shows more items than the Issues tab. Cause. GitHub's open issues count includes pull requests. The metric card is labelled with this caveat. Fix. Nothing to fix — read the label. Subtract the PR count manually if you need issues-only. Contributors count differs from the Contributors tab Cause. The count is derived from GitHub's contributor-statistics pagination (commit totals), not a complete contribution model. Analysis section is partial or missing files Symptoms. Coverage shows partial , or findings mention files as “not inspected”. Cause. The engine is budget-limited: 24 files / 192 KB per file / 400 K characters by default. Skipped files are recorded with reasons ( too-large , budget-exhausted , binary , fetch-failed ). Fix. This is by design for interactive latency. If you fork the app, you can pass DEEP BUDGET to runDeepAnalysis (see Examples). Source. lib/analysis/budgets.ts . tree-sitter / WASM errors in development Symptoms. Analysis logs mention WASM loading failures for a language grammar. Cause. web-tree-sitter and tree-sitter-wasms are externalized in next.config.js ; unusual bundler or edge runtimes may not load them. Fix. Run on the standard Node.js server ( npm run dev / npm start ). If a single grammar fails, that language's stage degrades to partial — other stages still run. (General suggestion: the engine is designed to degrade rather than crash; if you see a hard crash, please open an issue with the stack trace.) Dev server will not start — port in use Error: listen EADDRINUSE: address already in use :::3000 Fix. npm run dev -- -p 3001 or stop the process occupying port 3000. Type errors after pulling latest changes Fix. npm install npm run typecheck The lockfile may have changed; stale node modules is the usual cause. Documentation search returns nothing Cause. The search index is generated at predev / prebuild . If you added an MDX page but skipped those steps, the index is stale. Fix. node scripts/build-docs-index.mjs Then reload. Check that the page is registered in lib/docs/pages.json and the file exists at content/docs/{slug}.mdx . Still stuck? Search the existing issues: github.com/dipeshdarks/DipAi/issues. Open a new issue with: the exact URL or command, the observed behaviour, the expected behaviour, and your Node version ( node --version )."
+    },
+    {
+      "slug": "contributing",
+      "title": "Contributing",
+      "description": "Fork, branch, run the checks, and open a pull request.",
+      "headings": [
+        {
+          "title": "1. Fork and clone",
+          "id": "1-fork-and-clone"
+        },
+        {
+          "title": "2. Create a branch",
+          "id": "2-create-a-branch"
+        },
+        {
+          "title": "3. Install and verify the baseline",
+          "id": "3-install-and-verify-the-baseline"
+        },
+        {
+          "title": "4. Make your change",
+          "id": "4-make-your-change"
+        },
+        {
+          "title": "5. Run the checks again",
+          "id": "5-run-the-checks-again"
+        },
+        {
+          "title": "6. Commit and push",
+          "id": "6-commit-and-push"
+        },
+        {
+          "title": "7. Open a pull request",
+          "id": "7-open-a-pull-request"
+        },
+        {
+          "title": "Reporting bugs & requesting features",
+          "id": "reporting-bugs-requesting-features"
+        },
+        {
+          "title": "Documentation contributions",
+          "id": "documentation-contributions"
+        },
+        {
+          "title": "Review expectations",
+          "id": "review-expectations"
+        }
+      ],
+      "body": "Diplens (repository dipeshdarks/DipAi) is open source. Contributions of code, tests, and documentation are welcome. <Callout type=\"info\" title=\"No separate CONTRIBUTING.md (yet)\" This page is the contributing guide. There is no dedicated CONTRIBUTING.md file or LICENSE file in the repository today — if you add one via a pull request, please update this page to match. </Callout 1. Fork and clone Open github.com/dipeshdarks/DipAi and click Fork . Clone your fork: git clone https://github.com/<your-username /DipAi.git cd DipAi git remote add upstream https://github.com/dipeshdarks/DipAi.git 2. Create a branch git checkout -b fix/short-description Use a focused branch per change ( fix/… , feat/… , docs/… , test/… ). 3. Install and verify the baseline npm install npm run lint npm run typecheck npm test npm run build All four must pass before you start changing code, so you can attribute any failure to your change. 4. Make your change Guidelines that match the existing codebase: TypeScript strict — no any unless truly unavoidable; prefer precise types in types/ .ts . Tests — new behaviour needs tests. Vitest + Testing Library; colocate as .test.ts(x) beside the source. Server/client boundary — GitHub tokens and fetches stay in server code; client components receive plain props. Never fabricate data — missing values stay null and render as — ; heuristics must state their rules. Static-only analysis — the engine must never execute analysed repository code. Docs — if you change user-facing behaviour, update the matching page under content/docs/ . 5. Run the checks again npm run lint && npm run typecheck && npm test && npm run build Fix every failure you introduced. Do not weaken existing tests to make yours pass. 6. Commit and push git add -A git commit -m \"fix: describe the change in one line\" git push origin fix/short-description Keep commits focused; split unrelated work into separate PRs. 7. Open a pull request Open a PR against dipeshdarks/DipAi → main : github.com/dipeshdarks/DipAi/compare. Use a clear title and describe what changed and why . Link related issues ( Fixes 123 ). Include screenshots for UI changes (both dark and light themes if relevant). Note any docs updates you made (or deliberately skipped). Reporting bugs & requesting features Bugs: github.com/dipeshdarks/DipAi/issues/new — include reproduction steps, observed vs expected behaviour, and node --version . Features: same tracker; open an issue first for large changes so the direction can be discussed before a PR. Documentation contributions The docs site is part of this repository: | Path | Contents | |---|---| | content/docs/ .mdx | page content (markdown + MDX components) | | lib/docs/pages.json | slug / title / description registry | | lib/docs/mdx.ts | static import map for new pages | | components/docs/ | sidebar, TOC, search, code blocks, theme | After editing content, run node scripts/build-docs-index.mjs (or just npm run dev , which does it for you) and verify search finds your new headings via <kbd class=\"kbd\" ⌘K</kbd . Docs pull requests are held to the same accuracy standard as code: no invented commands, APIs, or file paths — link to real source files only. Review expectations Maintainers review for correctness, test coverage, type safety, and honesty of the UX (no fabricated metrics, no silent failures). Small focused PRs merge fastest."
+    }
+  ]
+}

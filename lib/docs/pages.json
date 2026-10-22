@@ -1,0 +1,68 @@
+[
+  {
+    "slug": "getting-started",
+    "title": "Getting Started",
+    "description": "What DipAi is, the problem it solves, and how its pieces fit together.",
+    "source": "README.md"
+  },
+  {
+    "slug": "installation",
+    "title": "Installation",
+    "description": "Prerequisites, clone, install, environment setup, and first run.",
+    "source": "package.json"
+  },
+  {
+    "slug": "quick-start",
+    "title": "Quick Start",
+    "description": "The shortest verified path from a clean checkout to a live report.",
+    "source": "app/repo/[owner]/[repo]/page.tsx"
+  },
+  {
+    "slug": "core-concepts",
+    "title": "Core Concepts",
+    "description": "Reports, heuristics, coverage, budgets, and the static-only policy.",
+    "source": "types/analysis.ts"
+  },
+  {
+    "slug": "features",
+    "title": "Features",
+    "description": "Every implemented feature, what it does, and where it lives in the code.",
+    "source": "app"
+  },
+  {
+    "slug": "architecture",
+    "title": "Architecture",
+    "description": "Directory layout, modules, execution flow, and data flow.",
+    "source": "lib"
+  },
+  {
+    "slug": "api-reference",
+    "title": "API Reference",
+    "description": "Exported functions, types, and routes from the real source code.",
+    "source": "lib"
+  },
+  {
+    "slug": "configuration",
+    "title": "Configuration",
+    "description": "Verified environment variables and configuration files.",
+    "source": ".env.example"
+  },
+  {
+    "slug": "examples",
+    "title": "Examples",
+    "description": "Copyable commands, URLs, and code samples that match the codebase.",
+    "source": "lib/validation.ts"
+  },
+  {
+    "slug": "troubleshooting",
+    "title": "Troubleshooting",
+    "description": "Verified failure modes with causes and fixes.",
+    "source": "lib/github.ts"
+  },
+  {
+    "slug": "contributing",
+    "title": "Contributing",
+    "description": "Fork, branch, run the checks, and open a pull request.",
+    "source": "package.json"
+  }
+]

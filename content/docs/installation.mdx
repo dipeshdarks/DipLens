@@ -1,0 +1,109 @@
+## Prerequisites
+
+| Requirement | Notes |
+|---|---|
+| **Node.js 20+** | Recommended. The project is typed against `@types/node` ^20; there is no `engines` field in `package.json`, so older Node versions are not hard-blocked but are untested. |
+| **npm** | The repo ships a `package-lock.json`; npm is the verified package manager. |
+| **Git** | To clone the repository. |
+| **(Optional) GitHub token** | A free personal access token with public **read-only** scope raises the GitHub API rate limit from 60/h to 5,000/h. See [Configuration](/docs/configuration). |
+
+No database, no Docker, and no other services are required.
+
+## Clone
+
+```bash
+git clone https://github.com/dipeshdarks/DipAi.git
+cd DipAi
+```
+
+PowerShell:
+
+```powershell
+git clone https://github.com/dipeshdarks/DipAi.git
+Set-Location DipAi
+```
+
+## Install dependencies
+
+```bash
+npm install
+```
+
+This installs Next.js 14, React 18, TypeScript, Tailwind CSS, Recharts, Zod, tree-sitter WASM packages, MDX, and the test toolchain (Vitest + Testing Library).
+
+## Environment setup (optional)
+
+The app runs with **no configuration at all** for light usage. To raise the GitHub rate limit, create a local env file and set a server-side token:
+
+```bash
+cp .env.example .env.local
+```
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+Then edit `.env.local`:
+
+```bash
+GITHUB_TOKEN=ghp_your_token_here
+```
+
+<Callout type="warning" title="Never prefix the token with NEXT_PUBLIC_">
+  `GITHUB_TOKEN` is read only on the server (`lib/github.ts`). Exposing it to the browser would
+  leak it. Do not commit `.env.local` — it is gitignored.
+</Callout>
+
+## Run the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). You should see the Diplens homepage with the repository search field.
+
+Before `next dev` starts, npm runs `predev`, which rebuilds the documentation search index
+(`scripts/build-docs-index.mjs`). A healthy start prints something like:
+
+```text
+[docs-index] wrote 11 page(s) to lib/docs/search-index.json
+  ✓ Ready in ...
+```
+
+## Production build
+
+```bash
+npm run build
+npm run start
+```
+
+`npm run build` also runs `prebuild` (the same search-index step) before `next build`.
+
+## Verify the install
+
+Run the quality gates — all four must pass before you change anything:
+
+```bash
+npm run lint        # ESLint
+npm run typecheck   # tsc --noEmit
+npm test            # vitest run
+npm run build       # production build
+```
+
+Then exercise the app: search for a public repository (for example `vercel/next.js`) and confirm the report page renders metrics, charts, and analysis sections.
+
+## Common setup errors
+
+**`Cannot find module 'next'` or similar** — `node_modules` is missing or incomplete. Re-run `npm install` in the project root.
+
+**Rate-limit errors while testing repeatedly** — unauthenticated GitHub access is limited to 60 requests/hour per IP. Add a `GITHUB_TOKEN` (see [Configuration](/docs/configuration)) or wait for the limit window to reset.
+
+**Port 3000 already in use** — stop the other process or run `npm run dev -- -p 3001`.
+
+**TypeScript errors after pulling** — run `npm install` again; the lockfile may have changed.
+
+## Next step
+
+Continue to [Quick Start](/docs/quick-start) for the shortest path from this clean checkout to a working, shareable report.

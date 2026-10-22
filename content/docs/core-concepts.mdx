@@ -1,0 +1,107 @@
+## The report model
+
+A **report** is the normalized result of fetching one public repository. Its shape is the `Report` type in [`types/report.ts`](https://github.com/dipeshdarks/DipAi/blob/main/types/report.ts):
+
+```ts
+export type Report = {
+  repo: RepoSummary;
+  contributors: ContributorSummary[] | null;
+  contributorCount: number | null;
+  weeks: WeeklyActivity[] | null;
+  statsPending: boolean;
+  releases: ReleaseSummary[] | null;
+  languages: LanguageStat[] | null;
+  sectionErrors: SectionErrors;
+  checkedAt: string;
+};
+```
+
+Two invariants matter everywhere in the codebase:
+
+1. **Missing is not zero.** A value that could not be fetched is `null` and renders as `—`, never as a fake `0`. Chart datasets that are empty render an explicit empty state.
+2. **Raw payloads never reach the UI.** GitHub's snake_case payloads are converted by the normalizers in [`lib/github.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/github.ts) (`normalizeRepo`, `normalizeRelease`, `normalizeContributor`, `normalizeActivity`, `normalizeLanguages`) into the stable camelCase types above.
+
+## Partial failures are first-class
+
+`getReport` fetches the repository plus five satellite endpoints in parallel (contributors, contributor count, commit activity, releases, languages). A failure in one satellite does not fail the report — it records a message in `sectionErrors` and the affected UI section shows the message instead of data:
+
+| Section | `sectionErrors` key | Shown when |
+|---|---|---|
+| Contributors | `contributors` | contributor fetch failed |
+| Releases | `releases` | releases fetch failed |
+| Commit activity | `stats` | stats fetch failed *and* it was not a 202 pending |
+| Languages | `languages` | languages fetch failed |
+
+The repository itself (`repo`) is required: if it cannot be fetched, the page renders the not-found or error state.
+
+## Health signals are heuristics
+
+`healthSignals(report)` in [`lib/health.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/health.ts) returns four signals. Each carries a `label` (`Active` / `Moderate` / `Needs attention` / `Unknown`) and a human-readable `detail` that states the rule:
+
+| Signal | Rule (simplified) |
+|---|---|
+| Recent activity | days since last push: ≤30 → Active, ≤180 → Moderate, else Needs attention; missing timestamp → Unknown |
+| Release recency | same day buckets against the latest **published** release; no releases → Unknown |
+| Community interest | stars + forks ≥ 100 → Active, else Moderate (popularity is explicitly *not* a quality measure) |
+| Repository maintenance | archived → Needs attention; has license + description → Active; else Moderate |
+
+<Callout type="info" title="Not an official GitHub score">
+  These labels are Diplens heuristics calculated from visible data. They are not an official
+  GitHub health rating, and the UI never invents a numeric score.
+</Callout>
+
+`summarizeWeeks` derives chart summaries (total, peak week, quiet week, active-week count) from the weekly commit dataset for the activity section.
+
+## Deep analysis categories
+
+The deep-analysis result (`DeepAnalysis` in [`types/analysis.ts`](https://github.com/dipeshdarks/DipAi/blob/main/types/analysis.ts)) groups work into categories: architecture, quality, security, dependencies, tests/CI, activity, and findings. Coverage of each category is tracked explicitly (`Coverage` / `CategoryCoverage`) with status `complete`, `partial`, or `unavailable`, and every skipped file is recorded with a reason (`too-large`, `budget-exhausted`, `binary`, `fetch-failed`).
+
+## Findings carry evidence
+
+Every finding produced by the engine (defects, taint candidates, secret-pattern matches) is normalized through [`lib/analysis/evidence.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/analysis/evidence.ts):
+
+- `severity`: `critical` / `high` / `medium` / `low` / `info`
+- `confidence`: `high` / `medium` / `low`
+- `status`: `verified` / `heuristic` / `unavailable`
+- `evidence`: file path + line range (+ snippet where available)
+
+A taint path is always presented as a **candidate** with sanitizers, preconditions, and false-positive caveats — never as a confirmed exploit.
+
+## Budgets
+
+Analysis is hard-limited by budgets in [`lib/analysis/budgets.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/analysis/budgets.ts):
+
+| Budget field | `DEFAULT_BUDGET` (used in production) | `DEEP_BUDGET` (forensic) |
+|---|---|---|
+| `maxFiles` | 24 | 250 |
+| `maxFileBytes` | 196,608 (192 KB) | 262,144 (256 KB) |
+| `maxTotalChars` | 400,000 | 4,000,000 |
+| `maxTreeEntries` | 12,000 | 30,000 |
+| `maxDepth` | 8 | 12 |
+| `requestTimeoutMs` | 8,000 | 12,000 |
+| `maxApiRequests` | 40 | 60 |
+| `maxDirTraversals` | 6 | 6 |
+
+The report route runs with `DEFAULT_BUDGET`. Files skipped by budget are reported as not inspected — they are never silently ignored.
+
+## The static-only policy
+
+Diplens **never executes repository code**. Source text is fetched from `raw.githubusercontent.com` (pinned to a commit SHA), parsed in memory with tree-sitter WASM grammars, and analysed with pure functions. There is no `eval`, no subprocess, no package installation of the analysed repository. Repository content is treated as untrusted data throughout, and secret-shaped strings are redacted before display (`lib/analysis/redact.ts`).
+
+## Caching and timeouts
+
+The GitHub client in [`lib/github.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/github.ts) applies Next.js `fetch` revalidation per endpoint:
+
+| Endpoint | Revalidate (seconds) |
+|---|---|
+| Repository metadata | 300 |
+| Contributors | 600 |
+| Commit activity | 900 |
+| Releases | 600 |
+| Languages | 900 |
+
+Every request has an 8-second timeout (`AbortSignal.timeout`). Rate-limit responses (HTTP 429, or 403 with `x-ratelimit-remaining: 0`) are mapped to a typed `GitHubError` with a `retryAfterSeconds` hint when GitHub provides one.
+
+## Next step
+
+See [Features](/docs/features) for how these concepts surface in the UI, or [Architecture](/docs/architecture) for the module-by-module layout.

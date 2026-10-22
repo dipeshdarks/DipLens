@@ -1,0 +1,121 @@
+Each problem below is either **verified** against the code (the handling exists in source and is linked) or clearly marked as a **general suggestion**.
+
+## Rate limit reached
+
+**Symptoms.** Report sections show “GitHub rate limit reached. Try again in a few minutes.” or the `/api/file` endpoint returns `429` with `"error": "rate-limited"`.
+
+**Cause.** Unauthenticated GitHub REST access is limited to 60 requests/hour per IP. The client detects HTTP 429, or HTTP 403 with `x-ratelimit-remaining: 0`.
+
+**Fix.** Add a `GITHUB_TOKEN` to `.env.local` (5,000 req/h) and restart the dev server. If you already have a token, verify it is *not* prefixed with `NEXT_PUBLIC_` and that the server was restarted. `retryAfterSeconds` (when present on the error) tells you how long to wait.
+
+**Source.** [`lib/github.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/github.ts) — `isRateLimited`, `rateLimitSeconds`, `errorFromResponse`.
+
+## Commit activity shows “still computing”
+
+**Symptoms.** The commit-activity chart shows a pending/202 state instead of bars.
+
+**Cause.** GitHub computes `stats/commit_activity` lazily and answers HTTP 202 until the statistic is ready. This is normal for newly created or rarely accessed repositories.
+
+**Fix.** Wait a minute and reload the report. The UI never fabricates zeros for a pending statistic.
+
+**Source.** [`lib/github.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/github.ts) (`pending: true` on HTTP 202), `statsPending` in the report route.
+
+## Repository not found (but it exists)
+
+**Symptoms.** The report shows the not-found page for a repository you can open in a browser.
+
+**Checks.**
+
+1. The name is exactly `owner/repo` — case-sensitive as GitHub reports it.
+2. The repository is **public** — private repos are out of scope.
+3. The owner has not renamed/moved it (old URLs 404 on GitHub too).
+
+**Note.** The route streams its loading shell, so the HTTP status is 200 even when the visible state is a correct not-found page. This is Next.js streaming behaviour, documented in the repository README.
+
+**Source.** [`app/repo/[owner]/[repo]/page.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/app/repo/[owner]/[repo]/page.tsx) (`notFound()` on `GitHubError.kind === "not_found"`).
+
+## Invalid input error in the search box
+
+**Symptoms.** `Enter owner/repo or a github.com URL.` appears and no navigation happens.
+
+**Cause.** `parseRepo` rejected the input. Common triggers: extra path segments (`owner/repo/issues`), non-github hosts, typos in `github.com`, or empty segments.
+
+**Fix.** Use exactly `owner/repo` or a plain repository URL on `github.com` / `www.github.com`.
+
+**Source.** [`lib/validation.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/validation.ts).
+
+## File viewer returns 413 or 415
+
+**Symptoms.** `GET /api/file` answers `{"error":"too-large"}` or `{"error":"binary"}`.
+
+**Cause.** The viewer caps files at 256 KB (`MAX_VIEW_BYTES = 262144`) and only displays text.
+
+**Fix.** View large files directly on GitHub. There is no parameter to raise the cap; it is a deliberate safety limit.
+
+**Source.** [`app/api/file/route.ts`](https://github.com/dipeshdarks/DipAi/blob/main/app/api/file/route.ts).
+
+## Open-issue count seems too high
+
+**Symptoms.** The open-issues card shows more items than the Issues tab.
+
+**Cause.** GitHub's `open_issues_count` includes pull requests. The metric card is labelled with this caveat.
+
+**Fix.** Nothing to fix — read the label. Subtract the PR count manually if you need issues-only.
+
+## Contributors count differs from the Contributors tab
+
+**Cause.** The count is derived from GitHub's contributor-statistics pagination (commit totals), not a complete contribution model.
+
+## Analysis section is partial or missing files
+
+**Symptoms.** Coverage shows `partial`, or findings mention files as “not inspected”.
+
+**Cause.** The engine is budget-limited: 24 files / 192 KB per file / 400 K characters by default. Skipped files are recorded with reasons (`too-large`, `budget-exhausted`, `binary`, `fetch-failed`).
+
+**Fix.** This is by design for interactive latency. If you fork the app, you can pass `DEEP_BUDGET` to `runDeepAnalysis` (see [Examples](/docs/examples)).
+
+**Source.** [`lib/analysis/budgets.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/analysis/budgets.ts).
+
+## tree-sitter / WASM errors in development
+
+**Symptoms.** Analysis logs mention WASM loading failures for a language grammar.
+
+**Cause.** `web-tree-sitter` and `tree-sitter-wasms` are externalized in `next.config.js`; unusual bundler or edge runtimes may not load them.
+
+**Fix.** Run on the standard Node.js server (`npm run dev` / `npm start`). If a single grammar fails, that language's stage degrades to partial — other stages still run. *(General suggestion: the engine is designed to degrade rather than crash; if you see a hard crash, please open an issue with the stack trace.)*
+
+## Dev server will not start — port in use
+
+```text
+Error: listen EADDRINUSE: address already in use :::3000
+```
+
+**Fix.** `npm run dev -- -p 3001` or stop the process occupying port 3000.
+
+## Type errors after pulling latest changes
+
+**Fix.**
+
+```bash
+npm install
+npm run typecheck
+```
+
+The lockfile may have changed; stale `node_modules` is the usual cause.
+
+## Documentation search returns nothing
+
+**Cause.** The search index is generated at `predev`/`prebuild`. If you added an MDX page but skipped those steps, the index is stale.
+
+**Fix.**
+
+```bash
+node scripts/build-docs-index.mjs
+```
+
+Then reload. Check that the page is registered in `lib/docs/pages.json` and the file exists at `content/docs/{slug}.mdx`.
+
+## Still stuck?
+
+1. Search the existing issues: [github.com/dipeshdarks/DipAi/issues](https://github.com/dipeshdarks/DipAi/issues).
+2. Open a new issue with: the exact URL or command, the observed behaviour, the expected behaviour, and your Node version (`node --version`).

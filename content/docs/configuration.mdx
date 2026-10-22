@@ -1,0 +1,87 @@
+## Environment variables
+
+There is exactly **one** environment variable, and it is optional.
+
+| Variable | Required | Where | Purpose |
+|---|---|---|---|
+| `GITHUB_TOKEN` | No | server only (`.env.local`) | Raises the GitHub REST rate limit from 60 req/h (unauthenticated) to 5,000 req/h. Use a free personal access token with public **read-only** scope. |
+
+Verified in [`.env.example`](https://github.com/dipeshdarks/DipAi/blob/main/.env.example):
+
+```bash
+# Optional: raises GitHub rate limit from 60/h to 5000/h. Server-only.
+GITHUB_TOKEN=
+```
+
+The token is read exclusively in [`lib/github.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/github.ts) when building request headers:
+
+```ts
+if (process.env.GITHUB_TOKEN) {
+  h.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+}
+```
+
+<Callout type="warning" title="Rules that keep the token safe">
+  1. **Never** prefix it with `NEXT_PUBLIC_` — that would compile it into browser bundles.
+  2. **Never** commit `.env.local` (it is listed in `.gitignore`).
+  3. Use the minimum scope: public **read-only**. Diplens never writes to GitHub.
+</Callout>
+
+### Without a token
+
+The app is fully functional for light usage. Unauthenticated public access is limited to 60 requests per hour per IP; beyond that, report sections show rate-limit messages (see [Troubleshooting](/docs/troubleshooting)).
+
+### Creating a token (GitHub UI)
+
+1. GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens (or classic tokens with public read-only scope).
+2. Grant read access to public repositories.
+3. Copy the token into `.env.local` as `GITHUB_TOKEN=…`.
+4. Restart `npm run dev` — Next.js only loads env files at startup.
+
+## npm scripts
+
+From [`package.json`](https://github.com/dipeshdarks/DipAi/blob/main/package.json):
+
+| Script | Command | Purpose |
+|---|---|---|
+| `predev` | `node scripts/build-docs-index.mjs` | regenerates `lib/docs/search-index.json` before dev |
+| `dev` | `next dev` | development server on port 3000 |
+| `prebuild` | `node scripts/build-docs-index.mjs` | regenerates the search index before production build |
+| `build` | `next build` | production build |
+| `start` | `next start` | serve the production build |
+| `lint` | `next lint` | ESLint (config: `.eslintrc.json` → `next/core-web-vitals`) |
+| `typecheck` | `tsc --noEmit` | TypeScript in strict mode |
+| `test` | `vitest run` | unit + component tests |
+| `test:watch` | `vitest` | test watch mode |
+
+## Configuration files
+
+| File | Role |
+|---|---|
+| [`next.config.js`](https://github.com/dipeshdarks/DipAi/blob/main/next.config.js) | MDX pipeline (`remark-gfm`, `rehype-highlight`), `pageExtensions` include `mdx`, tree-sitter packages marked as server externals, `reactStrictMode` |
+| [`tailwind.config.ts`](https://github.com/dipeshdarks/DipAi/blob/main/tailwind.config.ts) | design-token colors mapped to CSS variables (dark/light), Geist font families |
+| [`tsconfig.json`](https://github.com/dipeshdarks/DipAi/blob/main/tsconfig.json) | strict TypeScript; path alias `@/*` → project root |
+| [`vitest.config.ts`](https://github.com/dipeshdarks/DipAi/blob/main/vitest.config.ts) | Vitest with jsdom + React plugin |
+| [`vitest.setup.ts`](https://github.com/dipeshdarks/DipAi/blob/main/vitest.setup.ts) | Testing Library / jest-dom setup |
+| [`.eslintrc.json`](https://github.com/dipeshdarks/DipAi/blob/main/.eslintrc.json) | extends `next/core-web-vitals` |
+| [`.gitignore`](https://github.com/dipeshdarks/DipAi/blob/main/.gitignore) | ignores `node_modules`, `.next`, `.env*.local`, logs |
+
+## Ports & URLs
+
+| URL | Meaning |
+|---|---|
+| `http://localhost:3000/` | homepage (search) |
+| `http://localhost:3000/repo/{owner}/{repo}` | shareable report |
+| `http://localhost:3000/docs` | this documentation |
+| `http://localhost:3000/api/file?…` | file-viewer API |
+
+To change the dev port: `npm run dev -- -p 3001`.
+
+## What is intentionally not configurable
+
+These are fixed in code on purpose (documented so you know where to change them if you fork):
+
+- Analysis budgets in production use `DEFAULT_BUDGET` (swap to `DEEP_BUDGET` in `app/repo/[owner]/[repo]/page.tsx` if you want deeper runs).
+- Cache revalidation TTLs per endpoint (`lib/github.ts`).
+- The 8-second GitHub timeout and 256 KB file-viewer cap.
+- Supported analysis languages (TypeScript/JavaScript, Python, Go).

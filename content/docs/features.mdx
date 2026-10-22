@@ -1,0 +1,136 @@
+This page documents **implemented** features only. Planned or out-of-scope items are collected at the bottom, clearly labelled.
+
+## Repository search
+
+**What it does.** Accepts `owner/repo` or a full `github.com` URL, validates it, and navigates to the report.
+
+**Why it exists.** The entry point must reject garbage before it costs a network round-trip.
+
+**How to use it.** Type into the homepage field and press Enter; press <kbd class="kbd">/</kbd> to focus the field from anywhere.
+
+**Example inputs that parse successfully:**
+
+```text
+vercel/next.js
+https://github.com/vercel/next.js
+https://www.github.com/dipeshdarks/DipAi
+```
+
+**Source.** [`components/RepoSearch.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/RepoSearch.tsx), [`lib/validation.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/validation.ts).
+
+**Limitations.** Only `github.com` / `www.github.com` hosts are accepted; gitlab/bitbucket URLs are rejected. Repository names cannot start or end with a dot; `.git` suffixes are stripped.
+
+## Shareable report page
+
+**What it does.** Every repository has a canonical, crawlable URL at `/repo/{owner}/{repo}` that renders the full report server-side.
+
+**Why it exists.** Reports should be shareable as plain links — no accounts, no expiring tokens.
+
+**How to use it.** Navigate to any report and click **Share report**; the canonical URL is copied to the clipboard.
+
+**Source.** [`app/repo/[owner]/[repo]/page.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/app/repo/[owner]/[repo]/page.tsx), [`components/ShareReportButton.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/ShareReportButton.tsx).
+
+**Limitations.** Because the route streams its loading shell, an unknown repository renders the correct not-found *UI* but the HTTP status is 200 rather than 404 (Next.js streaming behaviour).
+
+## Overview metrics
+
+**What it does.** Cards for stars, forks, open issues, default branch, license, primary language, description, created date, and last push — all from the normalized `RepoSummary`.
+
+**Source.** [`components/report/OverviewSection.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/report/OverviewSection.tsx), [`lib/github.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/github.ts).
+
+**Limitations.** GitHub's `open_issues_count` includes pull requests; the card is labelled accordingly.
+
+## Commit activity chart
+
+**What it does.** Weekly commit counts for the past year from GitHub's `stats/commit_activity` endpoint, rendered as a bar chart (Recharts) with peak/quiet/total summaries.
+
+**Source.** [`components/CommitActivityChart.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/CommitActivityChart.tsx), [`components/report/GitActivitySection.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/report/GitActivitySection.tsx).
+
+**Limitations.** GitHub can return HTTP 202 while statistics are computed; the UI shows a "still computing" state with a reload hint instead of inventing zeros.
+
+## Contributors & languages
+
+**What it does.** Shows the top 8 contributors with avatars and contribution counts, a total contributor count derived from pagination, and a language breakdown by bytes with percentages.
+
+**Source.** [`components/report/ContributorsSection.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/report/ContributorsSection.tsx), [`components/report/DependenciesSection.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/report/DependenciesSection.tsx).
+
+**Limitations.** Contributor counts reflect GitHub's reported commit totals, not a complete measure of contribution (reviews, issues, and co-authored commits are not counted here).
+
+## Releases
+
+**What it does.** Lists the latest 5 published releases with tag, title, and publish date. Drafts are filtered out.
+
+**Source.** [`components/report/ReportShell.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/report/ReportShell.tsx).
+
+## Health signals
+
+**What it does.** Four explainable heuristics (recent activity, release recency, community interest, maintenance), each showing the exact data and rule behind the label.
+
+**Source.** [`lib/health.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/health.ts), [`components/ui.tsx`](https://github.com/dipeshdarks/DipAi/blob/main/components/ui.tsx).
+
+**Limitations.** Heuristics, not an official GitHub rating. Missing data shows `Unknown`, never a guess.
+
+## Deep static analysis pipeline
+
+**What it does.** For each report, an analysis engine runs a staged pipeline over the repository's source text:
+
+1. **Acquire** — pin the tree to a commit SHA; fetch prioritized source files from `raw.githubusercontent.com` within budget.
+2. **Classify** — source / test / config / docs / vendor / generated / binary.
+3. **Parse** — tree-sitter WASM grammars for TypeScript, Python, and Go; failed parses degrade to partial, never crash.
+4. **Symbols** — stable IDs, import resolution, reference resolution (`resolved` / `ambiguous` / `unresolved`).
+5. **Call graph** — confirmed edges from resolved calls; convention-based test links marked approximate.
+6. **Execution paths** — walks from detected entry points down confirmed edges only.
+7. **Taint candidates** — source → sink paths with sanitizers and preconditions, from language-specific catalogs.
+8. **Defect detectors** — logic, error-handling, async, resource, and contract patterns with verification plans.
+9. **Architecture** — module graph, entry points, subsystems.
+10. **Dependencies** — `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml` manifests.
+11. **Security** — secret-pattern scan with redaction.
+12. **Quality / tests-CI / activity** — complexity samples, workflow and test detection, commit summaries.
+
+**Why it exists.** Metadata tells you *activity*; static analysis tells you *structure and risk*.
+
+**Source.** [`lib/analysis/run.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/analysis/run.ts) and the rest of [`lib/analysis/`](https://github.com/dipeshdarks/DipAi/tree/main/lib/analysis).
+
+**Limitations.** Budget-capped (24 files / 192 KB per file by default). Results are **static candidates with evidence**, not confirmed defects or exploits. Analysed languages are TypeScript/JavaScript (via the TS grammar), Python, and Go. Repository code is never executed.
+
+## Report sections for analysis
+
+The analysis output is rendered in dedicated sections: architecture, code quality, security, dependencies, tests/CI, coverage, file explorer, and findings.
+
+**Source.** [`components/report/`](https://github.com/dipeshdarks/DipAi/tree/main/components/report) (`ArchitectureSection`, `CodeQualitySection`, `SecuritySection`, `DependenciesSection`, `TestsCiSection`, `CoverageSection`, `FileExplorerSection`, `FindingsSection`).
+
+## File viewer API
+
+**What it does.** `GET /api/file` returns the text of a single file from a public repository, size-capped at 256 KB, with path-traversal protection.
+
+**Example.**
+
+```bash
+curl "http://localhost:3000/api/file?owner=vercel&repo=next.js&path=package.json&ref=main"
+```
+
+**Source.** [`app/api/file/route.ts`](https://github.com/dipeshdarks/DipAi/blob/main/app/api/file/route.ts).
+
+**Limitations.** Text files only (binary → 415); files over the cap → 413; one file per request.
+
+## Documentation site
+
+**What it does.** This site: MDX-authored pages under `content/docs/`, generated table of contents, local full-text search (<kbd class="kbd">⌘K</kbd> / <kbd class="kbd">Ctrl+K</kbd>), dark/light themes, copyable code blocks, and Mermaid architecture diagrams — served from the same Next.js app at `/docs`.
+
+**Source.** `lib/docs/`, `components/docs/`, `content/docs/`, `app/docs/`.
+
+## Planned & out of scope
+
+These items appear in project planning notes or the README but are **not implemented**. They are listed so the docs never over-promise:
+
+- Private repository analytics
+- GitHub account OAuth / sign-in
+- Billing, teams, and multi-tenant features
+- Predictive AI scoring
+- Full code scanning or vulnerability scanning (the built-in secret-pattern scan is heuristic and local)
+- Official GitHub "health score" (Diplens heuristics are explicitly not that)
+
+<Callout type="warning" title="Found a gap between docs and code?">
+  Open an issue: [github.com/dipeshdarks/DipAi/issues](https://github.com/dipeshdarks/DipAi/issues).
+  Documentation accuracy is treated as a bug.
+</Callout>

@@ -1,0 +1,60 @@
+## What is Diplens?
+
+Diplens turns public GitHub repository metadata into a readable, shareable analytics report. Paste an `owner/repo` string or a full `github.com` URL and get one page with metrics, weekly commit activity, contributors, releases, languages, explainable health signals — plus a **deep static analysis** of the repository's source code.
+
+The product lives in the open-source repository [dipeshdarks/DipAi](https://github.com/dipeshdarks/DipAi) (the app is named Diplens; the repository is DipAi). It is built with Next.js App Router, React, TypeScript (strict), Tailwind CSS, Recharts, Lucide, and Zod. GitHub data is fetched and cached **server-side**; the browser never sees your token.
+
+## The problem it solves
+
+GitHub already exposes stars, commits, releases, and contributors — but scattered across many pages and raw API payloads. Diplens compresses that into a single URL you can share with a teammate, a client, or a hiring manager, and adds analysis GitHub does not do for you: module graphs, call graphs, taint-path candidates, defect patterns, and coverage of tests and CI.
+
+## Main capabilities
+
+- **Repository search** — `owner/repo` or a full GitHub URL, Zod-validated before any network call.
+- **Shareable report** — every report has a canonical URL at `/repo/{owner}/{repo}`; no sign-in required.
+- **Activity & history** — stars, forks, open issues, weekly commit volume for the past year, latest releases.
+- **Contributors & languages** — top contributors with contribution counts, language breakdown by bytes.
+- **Health signals** — four explainable heuristics (recent activity, release recency, community interest, maintenance), each stating the data behind the label. There is no hidden score.
+- **Deep static analysis** — tree-sitter WASM parsing (TypeScript, Python, Go), symbol tables, call graphs, execution paths, taint-flow candidates, defect detectors, dependency manifests, architecture summary, secret-pattern scan, and tests/CI detection.
+- **File viewer** — open individual source files through a size-capped, path-validated API route.
+
+<Callout type="info" title="Public repositories only">
+  Diplens analyses public repositories. Private repositories, OAuth sign-in, and authenticated git
+  operations are explicitly out of scope.
+</Callout>
+
+## Who should use it
+
+- **Maintainers** who want a quick health and structure snapshot of a repo they did not write.
+- **Reviewers and auditors** who need evidence-linked findings (every finding carries file/line evidence and a verification plan).
+- **Developers evaluating a dependency** before adopting it.
+- **Anyone** who wants a single shareable link that answers "what is going on in this repository?"
+
+## High-level architecture
+
+```text
+Browser ──▶ Next.js routes (App Router, server components)
+              │
+              ├── lib/validation.ts      input parsing (Zod)
+              ├── lib/github.ts          typed GitHub REST client + normalizers
+              ├── lib/health.ts          explainable health signals
+              ├── lib/analysis/*         deep static analysis pipeline
+              │       acquire → parse → symbols → callgraph → paths → taint/defects
+              └── components/report/*    report UI sections
+```
+
+All GitHub access happens on the server. Raw API payloads are normalized into stable camelCase types in [`types/report.ts`](https://github.com/dipeshdarks/DipAi/blob/main/types/report.ts) and [`types/analysis.ts`](https://github.com/dipeshdarks/DipAi/blob/main/types/analysis.ts) before any UI component sees them.
+
+## Next steps
+
+1. [Installation](/docs/installation) — prerequisites, clone, install, first run.
+2. [Quick Start](/docs/quick-start) — the shortest path from a clean checkout to a live report.
+3. [Core Concepts](/docs/core-concepts) — reports, heuristics, budgets, and the static-only policy.
+4. [Features](/docs/features) — every implemented feature in detail.
+
+## Repository
+
+- Repository: [github.com/dipeshdarks/DipAi](https://github.com/dipeshdarks/DipAi)
+- Issues: [github.com/dipeshdarks/DipAi/issues](https://github.com/dipeshdarks/DipAi/issues)
+- Pull requests: [github.com/dipeshdarks/DipAi/pulls](https://github.com/dipeshdarks/DipAi/pulls)
+- Source tree: [github.com/dipeshdarks/DipAi/tree/main](https://github.com/dipeshdarks/DipAi/tree/main)

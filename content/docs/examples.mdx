@@ -1,0 +1,168 @@
+Every command and snippet on this page is copied from the repository's actual configuration and source.
+
+## Install and run
+
+```bash
+git clone https://github.com/dipeshdarks/DipAi.git
+cd DipAi
+npm install
+npm run dev
+```
+
+PowerShell:
+
+```powershell
+git clone https://github.com/dipeshdarks/DipAi.git
+Set-Location DipAi
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Optional token setup
+
+```bash
+cp .env.example .env.local
+# edit .env.local and set:
+# GITHUB_TOKEN=ghp_your_token
+```
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+## Quality gates
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Analyze a repository (UI)
+
+Search inputs that parse successfully:
+
+```text
+vercel/next.js
+https://github.com/vercel/next.js
+https://github.com/dipeshdarks/DipAi
+```
+
+Resulting report URLs (share these):
+
+```text
+http://localhost:3000/repo/vercel/next.js
+http://localhost:3000/repo/dipeshdarks/DipAi
+```
+
+## File-viewer API
+
+```bash
+curl "http://localhost:3000/api/file?owner=dipeshdarks&repo=DipAi&path=package.json&ref=main"
+```
+
+PowerShell:
+
+```powershell
+Invoke-RestMethod "http://localhost:3000/api/file?owner=dipeshdarks&repo=DipAi&path=package.json&ref=main"
+```
+
+Expected JSON shape on success:
+
+```json
+{
+  "path": "package.json",
+  "content": "{ ... }",
+  "size": 1083,
+  "truncated": false,
+  "lines": 49
+}
+```
+
+## Use the validation helpers in your own code
+
+Inside the project (path alias `@/*`):
+
+```ts
+import { parseRepo, parseFilePath, encodeRepoPath } from "@/lib/validation";
+
+const ref = parseRepo("https://github.com/dipeshdarks/DipAi");
+if (ref) {
+  const apiPath = `/repos/${encodeRepoPath(ref.owner, ref.repo)}`;
+  console.log(apiPath); // /repos/dipeshdarks/DipAi
+}
+
+console.log(parseFilePath("lib/github.ts"));     // "lib/github.ts"
+console.log(parseFilePath("../secrets.env"));    // null
+```
+
+## Fetch a report programmatically (server-side)
+
+```ts
+import { getReport, GitHubError } from "@/lib/github";
+import { healthSignals } from "@/lib/health";
+
+try {
+  const report = await getReport("dipeshdarks", "DipAi");
+  console.log(report.repo.fullName);
+  console.log(report.sectionErrors); // e.g. { contributors: "Contributor data is unavailable." }
+  for (const signal of healthSignals(report)) {
+    console.log(`${signal.title}: ${signal.label} — ${signal.detail}`);
+  }
+} catch (e) {
+  if (e instanceof GitHubError) {
+    console.error(e.kind, e.message, e.retryAfterSeconds);
+  }
+  throw e;
+}
+```
+
+## Run deep analysis yourself
+
+```ts
+import { runDeepAnalysis } from "@/lib/analysis/run";
+import { DEFAULT_BUDGET, DEEP_BUDGET } from "@/lib/analysis/budgets";
+import { getReport } from "@/lib/github";
+
+const report = await getReport("dipeshdarks", "DipAi");
+
+// production budget (what the report route uses)
+const analysis = await runDeepAnalysis(report, { budget: DEFAULT_BUDGET });
+console.log(analysis.coverage.status);
+
+// forensic budget (more files, larger cap)
+// const analysis = await runDeepAnalysis(report, { budget: DEEP_BUDGET });
+```
+
+## Work with the docs content (this site)
+
+Add or edit an MDX page:
+
+```text
+content/docs/my-page.mdx      ← the markdown source
+lib/docs/pages.json           ← register slug + title + description
+lib/docs/mdx.ts               ← add the static import
+```
+
+Then regenerate the search index (also runs automatically on `predev` / `prebuild`):
+
+```bash
+node scripts/build-docs-index.mjs
+```
+
+Search is queried client-side against the bundled index; there is no search HTTP endpoint.
+
+## Programmatic search helpers (for tests or tooling)
+
+```ts
+import { stripMarkdown, extractHeadings, runSearch } from "@/lib/docs/search-core";
+
+extractHeadings("## Install\n```bash\nnpm install\n```\n## Usage");
+// [{ title: "Install", id: "install" }, { title: "Usage", id: "usage" }]
+
+stripMarkdown("# Hello **world**\n\n- item");
+// "Hello world item"
+```

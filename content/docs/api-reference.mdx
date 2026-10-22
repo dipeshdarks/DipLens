@@ -1,0 +1,205 @@
+This reference documents the **actual exported symbols** in the repository. Every signature was taken from the source file linked beside it. Categories that do not exist in the codebase (for example a CLI) are intentionally omitted.
+
+## lib/validation.ts
+
+[`lib/validation.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/validation.ts)
+
+### `parseRepo(input: string): RepoRef | null`
+
+Normalizes user input (`owner/repo` or a `github.com` URL) into a validated `RepoRef`. Returns `null` for anything invalid.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `input` | `string` | `owner/repo`, or an `http(s)://github.com/owner/repo` URL (optional `.git` suffix, trailing slashes tolerated). |
+
+**Returns.** `{ owner, repo }` or `null`.
+
+**Errors & edge cases.** Non-github hosts → `null`. Extra path segments (issues, tree) → `null`. Empty segments, `.`/`..` segments → `null`. Owner must match `OWNER_RE`; repo must match `REPO_RE` and not start/end with a dot.
+
+```ts
+import { parseRepo } from "@/lib/validation";
+
+parseRepo("vercel/next.js");                    // { owner: "vercel", repo: "next.js" }
+parseRepo("https://github.com/dipeshdarks/DipAi.git"); // { owner: "dipeshdarks", repo: "DipAi" }
+parseRepo("gitlab.com/foo/bar");                // null
+```
+
+### `encodeRepoPath(owner: string, repo: string): string`
+
+URI-encodes both segments for safe interpolation into an API path.
+
+```ts
+encodeRepoPath("dipeshdarks", "DipAi"); // "dipeshdarks/DipAi"
+```
+
+### `parseFilePath(raw: string | null | undefined): string | null`
+
+Validates a repository-relative path for the file viewer. Rejects absolute paths, backslashes, control characters, URL-structural characters (`< > : " ? # %`), `.`/`..` segments, more than 20 segments, and paths over 500 characters.
+
+```ts
+parseFilePath("src/app/page.tsx"); // "src/app/page.tsx"
+parseFilePath("../../etc/passwd"); // null
+```
+
+### Constants
+
+- `OWNER_RE` — GitHub owner-name regex (1–39 chars, alphanumeric + hyphens, no leading/trailing hyphen).
+- `REPO_RE` — GitHub repo-name regex (1–100 chars, `[A-Za-z0-9._-]`).
+- `repoRefSchema` — Zod schema for `{ owner, repo }`.
+- `type RepoRef = { owner: string; repo: string }`.
+
+## lib/github.ts
+
+[`lib/github.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/github.ts)
+
+### `gh<T>(path: string, revalidate: number): Promise<GhResult<T>>`
+
+Low-level GitHub REST wrapper. Prefixes `https://api.github.com`, attaches auth headers (optional `GITHUB_TOKEN`), applies an 8-second timeout and Next.js revalidation.
+
+**Returns.** `{ ok: true, data: T, res: Response }` or `{ ok: false, error: GitHubError, pending?: boolean }`. `pending` is `true` when GitHub answers HTTP 202 (statistics still computing).
+
+**Errors.** Never throws for HTTP failures — they are mapped into `GitHubError` kinds: `not_found`, `rate_limited`, `unauthorized`, `forbidden`, `invalid`, `upstream`, `timeout`, `network`.
+
+### `getReport(owner: string, repo: string): Promise<Report>`
+
+Assembles the full report: primary repository fetch (throws `GitHubError` on failure) plus parallel satellite fetches whose failures become `sectionErrors`.
+
+```ts
+import { getReport } from "@/lib/github";
+
+const report = await getReport("dipeshdarks", "DipAi");
+console.log(report.repo.fullName, report.weeks?.length ?? 0, report.statsPending);
+```
+
+### `class GitHubError extends Error`
+
+| Field | Type | Description |
+|---|---|---|
+| `kind` | `GitHubErrorKind` | typed failure category |
+| `message` | `string` | user-facing message |
+| `retryAfterSeconds?` | `number` | present on rate-limit errors when GitHub sends reset info |
+
+### Normalizers
+
+`normalizeRepo`, `normalizeRelease`, `normalizeContributor`, `normalizeActivity`, `normalizeLanguages` — convert raw GitHub payloads to the types in `types/report.ts`. Exported for unit tests.
+
+## lib/health.ts
+
+[`lib/health.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/health.ts)
+
+### `healthSignals(r: Report, now?: number): Signal[]`
+
+Returns the four explainable health signals. `now` defaults to `Date.now()` (injectable for tests).
+
+```ts
+import { healthSignals } from "@/lib/health";
+import { getReport } from "@/lib/github";
+
+const report = await getReport("dipeshdarks", "DipAi");
+for (const s of healthSignals(report)) {
+  console.log(s.title, "→", s.label, `(${s.detail})`);
+}
+```
+
+### `summarizeWeeks(weeks: WeeklyActivity[] | null): WeekSummary | null`
+
+Total, peak week, quiet week, week count, and active-week count. Returns `null` for empty input.
+
+### `daysSince(iso: string | null | undefined, now?: number): number | null`
+
+Whole days between an ISO timestamp and `now`; `null` for missing/invalid dates.
+
+## lib/analysis/budgets.ts
+
+[`lib/analysis/budgets.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/analysis/budgets.ts)
+
+| Export | Description |
+|---|---|
+| `DEFAULT_BUDGET` | production budget (24 files, 192 KB/file, 400 K chars, depth 8, 40 requests) |
+| `DEEP_BUDGET` | forensic budget (250 files, 256 KB/file, 4 M chars, depth 12, 60 requests) |
+| `budgetView(b)` | strips runtime-only fields for display |
+| `type AnalysisBudget` | budget shape |
+
+## lib/analysis/run.ts
+
+[`lib/analysis/run.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/analysis/run.ts)
+
+### `runDeepAnalysis(report: Report, options?: { budget?: AnalysisBudget }): Promise<DeepAnalysis>`
+
+Runs the full static-analysis pipeline over the repository described by `report`. Used by the report route with `DEFAULT_BUDGET`:
+
+```ts
+import { runDeepAnalysis } from "@/lib/analysis/run";
+import { DEFAULT_BUDGET } from "@/lib/analysis/budgets";
+
+const analysis = await runDeepAnalysis(report, { budget: DEFAULT_BUDGET });
+```
+
+Throws only on unexpected engine failures; the report route catches this and shows `analysisError` beside a fully rendered metadata report.
+
+## lib/analysis — key stage exports
+
+| Function | Module | Purpose |
+|---|---|---|
+| `acquireRaw(options)` | `acquire/raw.ts` | SHA-pinned file acquisition with limits |
+| `classifyFile(path, size)` | `acquire/classify.ts` | file-role classification |
+| `prioritizeFiles(entries, …)` | `discovery.ts` | ranking which files to fetch within budget |
+| `buildCallGraph(table, symbols)` | `graph/callgraph.ts` | resolved call edges |
+| `analyzeTaint(input, budget?)` | `flow/taint.ts` | source→sink candidate search |
+| `detectDefects(input)` | `defects/detect.ts` | pattern-based defect findings |
+| `buildArchitectureReport(input)` | `architecture.ts` | module graph + subsystems |
+| `buildDependencyReport(…)` | `dependencies.ts` | manifest aggregation |
+| `makeFinding(input)` / `sortFindings(f)` | `evidence.ts` | finding normalization |
+| `computeComplexity(root, language)` | `lang/complexity.ts` | per-function complexity samples |
+
+All of these are pure with respect to the network (I/O happens only in `acquire`).
+
+## HTTP routes
+
+### `GET /api/file`
+
+[`app/api/file/route.ts`](https://github.com/dipeshdarks/DipAi/blob/main/app/api/file/route.ts)
+
+| Query param | Required | Description |
+|---|---|---|
+| `owner` | yes | repository owner |
+| `repo` | yes | repository name |
+| `path` | yes | repository-relative file path (validated) |
+| `ref` | yes | git ref/SHA to read from |
+
+**Success (200).** `{ path, content, size, truncated, lines }`.
+
+| Error status | `error` code | Meaning |
+|---|---|---|
+| 400 | `invalid` | missing/invalid parameters or path traversal attempt |
+| 404 | `not-found` | file does not exist at that ref |
+| 413 | `too-large` | file exceeds the 256 KB viewer limit |
+| 415 | `binary` | file is not displayable text |
+| 429 | `rate-limited` | GitHub rate limit reached |
+| 502 | `upstream` | GitHub failure |
+| 504 | `timeout` | GitHub request timed out |
+
+```bash
+curl "http://localhost:3000/api/file?owner=dipeshdarks&repo=DipAi&path=package.json&ref=main"
+```
+
+## Types
+
+[`types/report.ts`](https://github.com/dipeshdarks/DipAi/blob/main/types/report.ts) — `Report`, `RepoSummary`, `WeeklyActivity`, `ReleaseSummary`, `ContributorSummary`, `LanguageStat`, `SectionErrors`, `Signal`, `SignalLabel`.
+
+[`types/analysis.ts`](https://github.com/dipeshdarks/DipAi/blob/main/types/analysis.ts) — `DeepAnalysis`, `Finding`, `Severity`, `Confidence`, `Evidence`, `Coverage`, `ArchitectureReport`, `SecurityReport`, `QualityReport`, `TestsCiReport`, `DependencyReport`, `ActivityReport`, `AnalysisBudgetView`, and the engine record types.
+
+## Docs subsystem (this site)
+
+| Export | Module | Purpose |
+|---|---|---|
+| `DOC_PAGES`, `NAV`, `docPage()`, `prevNext()`, `GITHUB`, `APP_VERSION` | `lib/docs/registry.ts` | navigation, metadata, GitHub links |
+| `runSearch(docs, query, limit?)`, `extractHeadings(src)`, `stripMarkdown(src)`, `searchIndex(pages)` | `lib/docs/search-core.ts` | pure search (bundled client-side) |
+| `loadDocSources()`, `loadSections(slug)`, `buildSearchIndex()` | `lib/docs/search.ts` | server-side fs loaders |
+| `slugify(text)`, `textOf(node)` | `lib/docs/slug.ts` | anchor ids shared by headings, TOC, and search |
+
+<Callout type="info" title="No CLI exists">
+  DipAi is a web application. There is no `dipai` binary, no programmatic SDK package, and no
+  webhook API. The exported functions above are the in-repo module surface, importable with the
+  `@/*` path alias from inside the project.
+</Callout>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import RepoSearch from "@/components/RepoSearch";
 import { Chip, MetricCard, Panel } from "@/components/ui";
-import { CircleDot, GitFork, Star, Users, Rocket, BarChart3 } from "lucide-react";
+import { CircleDot, GitFork, Star, Users, Rocket, BarChart3, Github } from "lucide-react";
 
 const features = [
   ["Live repository data", "Stars, forks, issues, and contributors straight from the GitHub API."],
@@ -29,6 +29,18 @@ export default function Home() {
         <div className="mt-9 flex w-full justify-center">
           <RepoSearch />
         </div>
+        <p className="mt-6 text-sm text-mute">
+          Open source ·{" "}
+          <a
+            href="https://github.com/dipeshdarks/DipAi"
+            className="inline-flex items-center gap-1 text-info hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Github className="h-3.5 w-3.5" aria-hidden />
+            dipeshdarks/DipAi
+          </a>
+        </p>
       </section>
 
       <section id="features" className="grid scroll-mt-8 gap-4 pb-16 md:grid-cols-3">
@@ -101,6 +113,19 @@ export default function Home() {
           <Link href="/repo/vercel/next.js" className="font-mono text-info hover:underline">
             Open the vercel/next.js report
           </Link>
+          . Read more in the{" "}
+          <Link href="/docs" className="text-info hover:underline">
+            docs
+          </Link>
+          , or browse the{" "}
+          <a
+            href="https://github.com/dipeshdarks/DipAi"
+            className="text-info hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            source on GitHub
+          </a>
           .
         </p>
       </section>

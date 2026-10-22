@@ -1,0 +1,67 @@
+## Prerequisites
+
+Finish [Installation](/docs/installation): Node.js 20+, a clone of [dipeshdarks/DipAi](https://github.com/dipeshdarks/DipAi), and `npm install` completed. An optional `GITHUB_TOKEN` in `.env.local` is recommended if you will test many repositories.
+
+## 1. Start the server
+
+```bash
+npm run dev
+```
+
+Wait for the `Ready` line, then open [http://localhost:3000](http://localhost:3000).
+
+## 2. Search for a repository
+
+Type `owner/repo` or a full GitHub URL into the search field and press **Enter** (or press <kbd class="kbd">/</kbd> to focus the field first). Both of these work:
+
+```text
+vercel/next.js
+https://github.com/vercel/next.js
+```
+
+Validation happens client- and server-side via `parseRepo` in
+[`lib/validation.ts`](https://github.com/dipeshdarks/DipAi/blob/main/lib/validation.ts) before any
+network request. Invalid input shows `Enter owner/repo or a github.com URL.` and no request is made.
+
+## 3. What to expect
+
+You are redirected to the canonical report URL:
+
+```text
+http://localhost:3000/repo/vercel/next.js
+```
+
+The report page streams a loading skeleton, then renders:
+
+- **Overview** — stars, forks, open issues (may include PRs; labelled on the card), default branch, license, description, last push.
+- **Commit activity** — weekly commit counts for the past year. If GitHub returns HTTP 202 (statistics still being computed), the chart shows a "still computing" state with a reload hint instead of zeros.
+- **Contributors** — top contributors and a total count from GitHub's pagination.
+- **Releases** — latest published releases (drafts are filtered out).
+- **Languages** — byte breakdown with percentages.
+- **Health signals** — four explainable heuristics, each with the data behind the label.
+- **Deep analysis** — architecture, code quality, security, dependencies, tests/CI, and findings sections produced by the static-analysis engine. All results are candidates with evidence; Diplens never executes repository code.
+
+## 4. Verify it works
+
+Three quick checks:
+
+1. The overview cards show real numbers that match the repository on github.com.
+2. The commit-activity chart renders bars (or the explicit "stats pending" state).
+3. The **Share report** button copies the canonical `/repo/{owner}/{repo}` link to your clipboard.
+
+You can also confirm the docs and API surfaces directly:
+
+- [http://localhost:3000/docs](http://localhost:3000/docs) — this documentation.
+- [http://localhost:3000/api/file?owner=vercel\&repo=next.js\&path=package.json\&ref=main](http://localhost:3000/api/file?owner=vercel&repo=next.js&path=package.json&ref=main) — the size-capped file-viewer API (JSON).
+
+## 5. Where to go next
+
+- [Core Concepts](/docs/core-concepts) — how reports, health signals, and analysis budgets work.
+- [Features](/docs/features) — every implemented feature with source links.
+- [Examples](/docs/examples) — copyable commands, URLs, and code samples.
+- [Troubleshooting](/docs/troubleshooting) — what to do when something looks wrong.
+
+<Callout type="tip" title="Try a small repository first">
+  Deep analysis is budget-limited (24 files by default). Small-to-medium repositories produce the
+  fastest, most complete reports while you are learning the tool.
+</Callout>
