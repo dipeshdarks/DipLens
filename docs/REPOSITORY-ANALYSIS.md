@@ -127,6 +127,75 @@ theme toggle with no-flash bootstrap; `prefers-reduced-motion` respected.
   buttons verified in tests; GitHub links target verified paths only; no placeholder pages; no
   fabricated stars/forks/license claims.
 
+## Prioritized findings (severity × confidence)
+
+Confidence: **C** = confirmed against source or live check; **H** = hypothesis needing more verification.
+
+| # | Severity | Finding | Evidence | Confidence |
+|---|---|---|---|---|
+| 1 | High | No CI: `.github/` does not exist in the tree, so lint/typecheck/test/build never run on pushes or PRs. | `git ls-tree -r --name-only origin/main` shows no `.github` path | C |
+| 2 | High (docs) | Documentation was README-only before this site: no concept, architecture, API, or troubleshooting docs. | Repo tree pre-`489823e` had no `content/docs`, no `docs/` | C |
+| 3 | Medium | No LICENSE file on GitHub — reuse terms undefined; the site deliberately claims none. | GitHub tree has no `LICENSE`; docs state this explicitly | C |
+| 4 | Medium | Test-coverage gap: `components/report/*` (OverviewSection, CommitActivityChart wrapper, Contributors/Security/Architecture sections) and `app/repo/*` have no unit tests; coverage exists for `lib/*` and interaction-critical components. | Test inventory: 16 files, all under `lib/`, `components/` root, `components/docs/` | C |
+| 5 | Medium | Report route returns HTTP 200 for unknown repositories (streaming loading shell). Visible UX is a correct 404 state; the status code lies. | `app/repo/[owner]/[repo]/page.tsx` streams; verified live: route itself 200, not-found page renders | C (documented in README) |
+| 6 | Medium | Wide MDX tables (e.g. the 3–4 column budget/reference tables) pushed the whole page sideways at ≤390px because `.docs-prose table` had no scroll container. | `globals.css` had `table { w-full border-collapse }` with no `overflow-x`; fixed in this round with GitHub-style `display:block; overflow-x:auto` | C (fixed) |
+| 7 | Medium | Build is fragile to ESM-only plugins: `remark-gfm`/`rehype-highlight` under CJS `next.config.js` must be loaded via `.default`, else `unified` rejects the preset ("empty preset" error). | Reproduced during build; fixed at `next.config.js:1-9` | C |
+| 8 | Medium | MDX under React Server Components crashes (`createContext is not a function`) unless root `mdx-components.tsx` exists — `@next/mdx` then falls back to `@mdx-js/react`. The file is load-bearing. | Stack trace at `/docs/[slug]` page-data collection; alias chain in `@next/mdx/index.js:24-28`; fix `mdx-components.tsx` | C |
+| 9 | Low | No separate `CONTRIBUTING.md`; contribution guidance lives only in `/docs/contributing`. | Repo tree lacks the file; docs page states this | C |
+| 10 | Low | Inline code tokens with long unbreakable strings (URLs, deep paths) could overflow 320px viewports. | `.docs-prose code:not(pre code)` had no `overflow-wrap`; fixed in this round | C (fixed) |
+| 11 | Low | GitHub stats endpoint can answer HTTP 202 for minutes on new repos; users may read the pending state as a bug. | Handled in `lib/github.ts` (`pending`) with UI hint; residual UX confusion only | H |
+
+Out of scope (reported, not changed): findings 1 and 4 would require adding CI workflows and new tests for `components/report/*` — core-app changes beyond the documentation task.
+
+## UX and developer-experience problems (pre-existing)
+
+1. **No entry map.** Before the site, a new developer had only the README: no "what is this, what can it do, how do I start" narrative, no architecture explanation, no error reference.
+2. **Opaque health signals.** Thresholds (≤30d active, ≤180d moderate, stars+forks ≥100) were readable only inside `lib/health.ts`.
+3. **Unverifiable claims risk.** No place existed to document partial failures (202 stats, `sectionErrors`), inviting users to distrust the UI when a section showed empty.
+4. **No troubleshooting path.** Rate-limit and pending-stats behavior were only discoverable by reading source.
+5. **Undocumented naming.** Repo is `DipAi`, product is `Diplens`; without the explanation the branding looks inconsistent (addressed on the getting-started page).
+
+## Design critique (Phase 3 — basis for the implemented system)
+
+**Information hierarchy.** Single-college docs pages with h2-first structure (h1 is the page title rendered by the layout, not MDX) — avoids double h1 and keeps ToC anchors derived from h2/h3 only.
+
+**Content density.** Article column capped near 70ch inside a 1280px shell; the three-column grid (60px sidebar + article + 208px ToC) collapses by dropping columns (ToC hides <1280px, sidebar becomes a drawer <1280px) instead of shrinking the reading column.
+
+**Typography.** 15px/1.7 body in `--c-mute` with `--c-ink` headings; monospace accents for commands and tokens; `tabular-nums` globally for metric alignment.
+
+**Color & contrast.** Dark-first charcoal ladder (`base #0B0D10 → card #12161C → elev #1F2731`) with a single blue accent (`--c-info`) and semantic ok/warn/bad; light theme inverts to a WCAG-sane ramp rather than a naive invert. Focus ring: 2px `--c-info` outline with offset.
+
+**Code presentation.** Build-time `rehype-highlight` (no runtime JS), custom token theme shared by both modes, language chip + copy button revealed on hover/focus-within, `overflow-x-auto` containment.
+
+**Search discoverability.** Persistent header control with visible ⌘K hint; dialog states for empty/querying/no-results; results carry kind icons and context snippets.
+
+**Interaction feedback.** Copy → "Copied" + check icon (1.6s), sidebar drawer with Escape + backdrop close, search with arrow/Enter/Escape keyboard model, theme toggle persisted pre-paint by inline script to avoid flash.
+
+**Accessibility.** `aria-current` on active nav, `role="dialog"`/`aria-modal` on search, `aria-expanded`/`aria-controls` on drawer trigger, accessible names on all icon buttons, `prefers-reduced-motion` kills all animation.
+
+**Deliberate avoids:** no glassmorphism, no gradient decoration, no fake metrics/badges, no animation library, no emoji icons (lucide only).
+
+## Second-pass review results (Phase 9, three-persona pass)
+
+- **Reviewer A (new developer):** can answer what-it-is/what-can-it-do/how-to-start from `/` and `/docs/getting-started`; naming (Diplens vs DipAi) explicitly explained; no dead ends (all nav targets verified live). *Defect found and fixed: none blocking; page map verified.*
+- **Reviewer B (engineer):** API reference signatures cross-checked against source; budgets table matches `budgets.ts`; no invented commands (all npm scripts from `package.json`). *Findings 1–5 above recorded as honest limitations in-site where user-facing.*
+- **Reviewer C (designer):** *Defects found:* (a) mobile table overflow — fixed; (b) inline-code overflow — fixed; (c) theme toggle untested — added `ThemeToggle.test.tsx` (3 tests). Diagram container already `overflow-x-auto`.
+
+## Verification record (headless, production build)
+
+Script `scratch/verify-site.mjs` against `next start` (scratch is gitignored):
+
+- 17 routes checked: `/`, `/docs`, all 11 `/docs/{slug}`, `/robots.txt`, `/sitemap.xml` → 200; `/definitely-not-a-page-xyz` → 404; `/repo/dipeshdarks/DipAi` → 200 (live GitHub-backed).
+- 13 distinct internal link targets extracted from rendered HTML: all resolve; every in-page anchor target (e.g. `#directory-layout`, `#rate-limit-reached`, `/#features`, `/#how`) present in the destination DOM.
+- Content smoke: homepage brand, docs hero CTAs, architecture diagram source (`flowchart TD`) and its heading anchors, API reference symbols (`parseRepo`, `getReport`, `runDeepAnalysis`) present in SSR output.
+- Browser-based visual testing at 1440/1024/768/390/320 was **not available in this environment**; responsive behavior was reviewed at source level (breakpoint usage, overflow containment) — listed as an unverified area below.
+
+## Unverified areas (honest list)
+
+1. Real-browser visual pass across the five target widths (no browser tooling available).
+2. Client-side Mermaid SVG rendering (diagram source ships in SSR payload and the component has a `<pre>` fallback; actual SVG paint needs a browser).
+3. Vercel production deploy of these changes (canonical base `https://diplensrepo.vercel.app` was taken from the repository About link).
+
 ## Documentation site delivery notes
 
 - MDX content: `content/docs/*.mdx` (11 pages).

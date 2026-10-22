@@ -56,11 +56,13 @@ body { @apply bg-base text-ink antialiased; font-variant-numeric: tabular-nums; 
 .docs-prose blockquote { @apply my-5 border-l-2 border-line py-1 pl-4 text-mute; }
 .docs-prose blockquote p { @apply my-2; }
 .docs-prose hr { @apply my-8 border-line; }
-.docs-prose table { @apply my-6 w-full border-collapse text-left text-sm; }
+/* display:block + overflow gives wide tables their own horizontal scroll on
+ * narrow screens instead of pushing the whole page sideways (GitHub-style). */
+.docs-prose table { @apply my-6 block w-full overflow-x-auto border-collapse text-left text-sm; }
 .docs-prose thead { @apply bg-elev; }
 .docs-prose th { @apply border border-line px-3 py-2 font-medium text-ink; }
 .docs-prose td { @apply border border-line px-3 py-2 align-top; }
-.docs-prose code:not(pre code) { @apply rounded bg-elev px-1.5 py-0.5 font-mono text-[0.85em] text-ink; }
+.docs-prose code:not(pre code) { @apply rounded bg-elev px-1.5 py-0.5 font-mono text-[0.85em] text-ink; overflow-wrap: anywhere; }
 .docs-prose pre { @apply my-5 overflow-x-auto rounded-lg border border-line bg-card p-4 font-mono text-[13px] leading-6; }
 
 /* ---------- highlight.js token theme (both modes) ---------- */
