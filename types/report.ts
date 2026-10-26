@@ -13,6 +13,8 @@ export type RepoSummary = {
   licenseName: string | null;
   licenseSpdx: string | null;
   archived: boolean;
+  disabled: boolean;
+  topics: string[];
   createdAt: string;
   pushedAt: string | null;
   updatedAt: string;
@@ -21,6 +23,8 @@ export type RepoSummary = {
 export type WeeklyActivity = {
   weekStart: string;
   commits: number;
+  /** Daily commit counts for the week (Sun–Sat, GitHub order). Absent for older cached data. */
+  daily?: number[];
 };
 
 export type ReleaseSummary = {

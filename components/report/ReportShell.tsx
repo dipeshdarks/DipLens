@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DeepAnalysis } from "@/types/analysis";
 import type { Report } from "@/types/report";
+import type { HealthRadar } from "@/types/health";
 import { StatusChip } from "@/components/report/StatusBits";
 import OverviewSection from "@/components/report/OverviewSection";
+import HealthRadarPanel from "@/components/health/HealthRadarPanel";
 import ArchitectureSection from "@/components/report/ArchitectureSection";
 import FileExplorerSection from "@/components/report/FileExplorerSection";
 import DependenciesSection from "@/components/report/DependenciesSection";
@@ -18,6 +20,7 @@ import CoverageSection from "@/components/report/CoverageSection";
 
 const TABS = [
   { id: "overview", label: "Overview" },
+  { id: "health", label: "Health radar" },
   { id: "architecture", label: "Architecture" },
   { id: "files", label: "File explorer" },
   { id: "dependencies", label: "Dependencies" },
@@ -40,10 +43,12 @@ export default function ReportShell({
   report,
   analysis,
   analysisError,
+  radar,
 }: {
   report: Report;
   analysis: DeepAnalysis | null;
   analysisError: string | null;
+  radar: HealthRadar | null;
 }) {
   const [active, setActive] = useState<TabId>("overview");
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -131,6 +136,7 @@ export default function ReportShell({
         className="focus:outline-none"
       >
         {active === "overview" && <OverviewSection report={report} analysis={analysis} />}
+        {active === "health" && <HealthRadarPanel radar={radar} />}
         {active === "architecture" && analysis && <ArchitectureSection analysis={analysis} />}
         {active === "files" && analysis && (
           <FileExplorerSection

@@ -21,6 +21,8 @@ function report(overrides: Partial<Report> = {}): Report {
       licenseName: "MIT License",
       licenseSpdx: "MIT",
       archived: false,
+      disabled: false,
+      topics: ["widgets"],
       createdAt: "2020-01-01T00:00:00Z",
       pushedAt: "2026-10-10T00:00:00Z",
       updatedAt: "2026-10-10T00:00:00Z",

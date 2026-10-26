@@ -158,6 +158,8 @@ type RawRepo = {
   created_at: string;
   updated_at: string;
   archived: boolean;
+  disabled?: boolean;
+  topics?: string[];
   license: { spdx_id: string | null; name: string | null } | null;
   owner: { login: string; avatar_url: string };
 };
@@ -179,7 +181,7 @@ type RawContributor = {
   contributions: number;
 };
 
-type RawWeek = { week: number; total: number };
+type RawWeek = { week: number; total: number; days?: number[] };
 
 /* ---------- normalizers (exported for tests) ---------- */
 
@@ -202,6 +204,8 @@ export function normalizeRepo(raw: RawRepo): RepoSummary {
         ? raw.license.spdx_id
         : null,
     archived: raw.archived ?? false,
+    disabled: raw.disabled ?? false,
+    topics: Array.isArray(raw.topics) ? raw.topics.filter((t) => typeof t === "string") : [],
     createdAt: raw.created_at,
     pushedAt: raw.pushed_at ?? null,
     updatedAt: raw.updated_at,
@@ -233,6 +237,9 @@ export function normalizeActivity(raw: RawWeek[]): WeeklyActivity[] {
   return raw.map((w) => ({
     weekStart: new Date(w.week * 1000).toISOString().slice(0, 10),
     commits: w.total ?? 0,
+    ...(Array.isArray(w.days) && w.days.length === 7
+      ? { daily: w.days.map((d) => (typeof d === "number" && Number.isFinite(d) ? d : 0)) }
+      : {}),
   }));
 }
 

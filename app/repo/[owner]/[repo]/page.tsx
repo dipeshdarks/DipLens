@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ExternalLink, GitBranch, Archive } from "lucide-react";
 import { GitHubError, getReport } from "@/lib/github";
+import { getHealthRadar } from "@/lib/health-radar/fetch";
 import { parseRepo } from "@/lib/validation";
 import { Chip, date } from "@/components/ui";
 import ShareReportButton from "@/components/ShareReportButton";
@@ -8,6 +9,7 @@ import ReportShell from "@/components/report/ReportShell";
 import { runDeepAnalysis } from "@/lib/analysis/run";
 import { DEFAULT_BUDGET } from "@/lib/analysis/budgets";
 import type { DeepAnalysis } from "@/types/analysis";
+import type { HealthRadar } from "@/types/health";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +36,15 @@ export default async function ReportPage({
   } catch (e) {
     analysisError =
       e instanceof Error ? e.message : "The analysis pipeline failed unexpectedly.";
+  }
+
+  // Health radar reuses the report above (no duplicate base fetches) and never
+  // throws for supporting endpoints — worst case the tab shows its empty state.
+  let radar: HealthRadar | null = null;
+  try {
+    radar = (await getHealthRadar(p.owner, p.repo, r)).radar;
+  } catch {
+    radar = null;
   }
 
   const { repo } = r;
@@ -80,7 +91,7 @@ export default async function ReportPage({
         </div>
       </header>
 
-      <ReportShell report={r} analysis={analysis} analysisError={analysisError} />
+      <ReportShell report={r} analysis={analysis} analysisError={analysisError} radar={radar} />
     </main>
   );
 }

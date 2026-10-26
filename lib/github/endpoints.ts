@@ -5,6 +5,11 @@ import type {
   CommitSummary,
   TreeEntry,
 } from "@/types/analysis";
+import type {
+  CommunityProfile,
+  IssueSampleItem,
+  PullSampleItem,
+} from "@/types/health";
 
 /* Raw payload shapes (never exposed to the UI). */
 
@@ -237,6 +242,152 @@ export async function listWorkflowRuns(
   const r = await gh<RawWorkflowRuns>(`${base(owner, repo)}/actions/runs?per_page=${perPage}`, 300);
   if (!r.ok) return r;
   return { ok: true, data: r.data.workflow_runs ?? [], res: r.res };
+}
+
+/* ---------- health-radar support ---------- */
+
+type RawCommunityProfile = {
+  health_percentage?: number | null;
+  description?: string | null;
+  files?: {
+    readme?: { path: string } | null;
+    license?: { path: string } | null;
+    contributing?: { path: string } | null;
+    code_of_conduct?: { path: string } | null;
+    security?: { path: string } | null;
+  } | null;
+};
+
+type RawIssue = {
+  number: number;
+  state: string;
+  created_at: string;
+  closed_at: string | null;
+  comments?: number;
+  pull_request?: unknown;
+};
+
+type RawPull = {
+  number: number;
+  state: string;
+  created_at: string;
+  closed_at: string | null;
+  merged_at: string | null;
+  comments?: number;
+};
+
+type RawContentItem = { name: string; path: string; type: string };
+
+/**
+ * Community profile: README/license/contributing/CoC/security presence in one call.
+ * 404 means the endpoint is unavailable for this repository — caller marks docs data null.
+ */
+export async function getCommunityProfile(
+  owner: string,
+  repo: string,
+): Promise<GhResult<CommunityProfile>> {
+  const r = await gh<RawCommunityProfile>(`${base(owner, repo)}/community/profile`, 900);
+  if (!r.ok) return r;
+  const f = r.data.files ?? {};
+  return {
+    ok: true,
+    data: {
+      healthPercentage: typeof r.data.health_percentage === "number" ? r.data.health_percentage : null,
+      description: r.data.description ?? null,
+      files: {
+        readme: Boolean(f.readme),
+        license: Boolean(f.license),
+        contributing: Boolean(f.contributing),
+        codeOfConduct: Boolean(f.code_of_conduct),
+        security: Boolean(f.security),
+      },
+    },
+    res: r.res,
+  };
+}
+
+/** Fallback documentation probe via the repository root listing. */
+export async function getRootDocSignals(
+  owner: string,
+  repo: string,
+  branch: string,
+): Promise<GhResult<CommunityProfile>> {
+  const r = await gh<RawContentItem[]>(
+    `${base(owner, repo)}/contents?ref=${encodeURIComponent(branch)}`,
+    900,
+  );
+  if (!r.ok) return r;
+  const names = (Array.isArray(r.data) ? r.data : []).map((i) => (i.name ?? "").toLowerCase());
+  const has = (re: RegExp) => names.some((n) => re.test(n));
+  return {
+    ok: true,
+    data: {
+      healthPercentage: null,
+      description: null,
+      files: {
+        readme: has(/^readme(\.[a-z0-9]+)?$/),
+        license: has(/^(license|copying)(\.[a-z0-9]+)?$/),
+        contributing: has(/^contributing(\.[a-z0-9]+)?$/),
+        codeOfConduct: has(/^code_of_conduct(\.[a-z0-9]+)?$/),
+        security: has(/^security(\.[a-z0-9]+)?$/),
+      },
+      fromContentsFallback: true,
+    },
+    res: r.res,
+  };
+}
+
+/**
+ * Recent issues sample (pull requests are excluded server-side so callers
+ * never have to re-filter). Sorted by most recently updated.
+ */
+export async function getIssuesSample(
+  owner: string,
+  repo: string,
+  perPage = 30,
+): Promise<GhResult<IssueSampleItem[]>> {
+  const r = await gh<RawIssue[]>(
+    `${base(owner, repo)}/issues?state=all&sort=updated&direction=desc&per_page=${perPage}`,
+    300,
+  );
+  if (!r.ok) return r;
+  const items: IssueSampleItem[] = [];
+  for (const i of r.data ?? []) {
+    if (!i || typeof i.number !== "number" || i.pull_request) continue;
+    items.push({
+      number: i.number,
+      state: i.state === "closed" ? "closed" : "open",
+      createdAt: i.created_at ?? "",
+      closedAt: i.closed_at ?? null,
+      comments: typeof i.comments === "number" ? i.comments : 0,
+    });
+  }
+  return { ok: true, data: items, res: r.res };
+}
+
+/** Recent pull-request sample (includes merged_at for merge-rate evidence). */
+export async function getPullsSample(
+  owner: string,
+  repo: string,
+  perPage = 20,
+): Promise<GhResult<PullSampleItem[]>> {
+  const r = await gh<RawPull[]>(
+    `${base(owner, repo)}/pulls?state=all&sort=updated&direction=desc&per_page=${perPage}`,
+    300,
+  );
+  if (!r.ok) return r;
+  const items: PullSampleItem[] = [];
+  for (const p of r.data ?? []) {
+    if (!p || typeof p.number !== "number") continue;
+    items.push({
+      number: p.number,
+      state: p.state === "closed" ? "closed" : "open",
+      createdAt: p.created_at ?? "",
+      mergedAt: p.merged_at ?? null,
+      comments: typeof p.comments === "number" ? p.comments : 0,
+    });
+  }
+  return { ok: true, data: items, res: r.res };
 }
 
 /* ---------- security ---------- */
